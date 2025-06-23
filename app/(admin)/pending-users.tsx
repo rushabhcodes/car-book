@@ -1,74 +1,108 @@
-import React from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  FlatList, 
-  TouchableOpacity, 
-  Alert
-} from 'react-native';
-import { Check, X, AlertCircle } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useAuthStore } from '@/store/authStore';
 import { useDealerStore } from '@/store/dealerStore';
 import { User } from '@/types/auth';
 import { Dealer } from '@/types/dealer';
+import { AlertCircle, Check, RefreshCw, X } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
 export default function PendingUsersScreen() {
-  const { pendingUsers, approveUser, rejectUser } = useAuthStore();
+  const { pendingUsers, approveUser, rejectUser, fetchPendingUsers, isLoading } = useAuthStore();
   const { addDealer } = useDealerStore();
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleApprove = (user: User) => {
+  useEffect(() => {
+    loadPendingUsers();
+  }, []);
+
+  const loadPendingUsers = async () => {
+    try {
+      setError(null);
+      await fetchPendingUsers();
+    } catch (err) {
+      setError('Failed to load pending users');
+      console.error('Error loading pending users:', err);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadPendingUsers();
+    setRefreshing(false);
+  };
+
+  const handleApprove = async (user: User) => {
     Alert.alert(
       "Approve Registration",
-      "Are you sure you want to approve this dealer registration?",
+      `Are you sure you want to approve ${user.name}'s dealer registration?`,
       [
         { text: "Cancel", style: "cancel" },
         { 
           text: "Approve", 
           style: "default",
-          onPress: () => {
-            // First approve the user in auth store
-            approveUser(user.id);
-            
-            // Then add the dealer to dealer store with default subscription
-            const newDealer: Dealer = {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              phone: user.phone,
-              role: 'dealer',
-              status: 'active',
-              subscription: {
-                plan: 'basic',
+          onPress: async () => {
+            try {
+              // First approve the user in auth store
+              await approveUser(user.id);
+              
+              // Then add the dealer to dealer store with default subscription
+              const newDealer: Dealer = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                role: 'dealer',
                 status: 'active',
-                startDate: new Date().toISOString(),
-                endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-                amount: 999,
-                listingLimit: 10
-              }
-            };
-            
-            addDealer(newDealer);
-            Alert.alert("Success", "Dealer registration has been approved");
+                subscription: {
+                  plan: 'basic',
+                  status: 'active',
+                  startDate: new Date().toISOString(),
+                  endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                  amount: 999,
+                  listingLimit: 10
+                }
+              };
+              
+              addDealer(newDealer);
+              Alert.alert("Success", `${user.name} has been approved as a dealer`);
+            } catch (error) {
+              Alert.alert("Error", "Failed to approve dealer registration");
+              console.error('Error approving user:', error);
+            }
           }
         }
       ]
     );
   };
 
-  const handleReject = (userId: string) => {
+  const handleReject = async (user: User) => {
     Alert.alert(
       "Reject Registration",
-      "Are you sure you want to reject this dealer registration?",
+      `Are you sure you want to reject ${user.name}'s dealer registration?`,
       [
         { text: "Cancel", style: "cancel" },
         { 
           text: "Reject", 
           style: "destructive",
-          onPress: () => {
-            rejectUser(userId);
-            Alert.alert("Success", "Dealer registration has been rejected");
+          onPress: async () => {
+            try {
+              await rejectUser(user.id);
+              Alert.alert("Success", `${user.name}'s registration has been rejected`);
+            } catch (error) {
+              Alert.alert("Error", "Failed to reject dealer registration");
+              console.error('Error rejecting user:', error);
+            }
           }
         }
       ]
@@ -100,11 +134,11 @@ export default function PendingUsersScreen() {
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Registered:</Text>
             <Text style={styles.infoValue}>
-              {new Date().toLocaleDateString('en-IN', {
+              {item.created_at ? new Date(item.created_at).toLocaleDateString('en-IN', {
                 day: '2-digit',
                 month: 'short',
                 year: 'numeric'
-              })}
+              }) : 'Unknown'}
             </Text>
           </View>
         </View>
@@ -119,7 +153,7 @@ export default function PendingUsersScreen() {
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.actionButton, styles.rejectButton]} 
-            onPress={() => handleReject(item.id)}
+            onPress={() => handleReject(item)}
           >
             <X size={16} color="#FFF" />
             <Text style={styles.actionButtonText}>Reject</Text>
@@ -132,22 +166,59 @@ export default function PendingUsersScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Pending Registrations</Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>Pending Registrations</Text>
+          <Text style={styles.subtitle}>
+            {pendingUsers.length} pending approval{pendingUsers.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.refreshButton} 
+          onPress={onRefresh}
+          disabled={refreshing}
+        >
+          <RefreshCw size={20} color={colors.primary} />
+        </TouchableOpacity>
       </View>
       
-      <FlatList
-        data={pendingUsers}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <AlertCircle size={48} color={colors.textSecondary} />
-            <Text style={styles.emptyText}>No pending registrations</Text>
-            <Text style={styles.emptySubtext}>All dealer registrations have been processed</Text>
-          </View>
-        )}
-      />
+      {error && (
+        <View style={styles.errorContainer}>
+          <AlertCircle size={20} color={colors.error} />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadPendingUsers}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
+      {isLoading && pendingUsers.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading pending users...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={pendingUsers}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <AlertCircle size={48} color={colors.textSecondary} />
+              <Text style={styles.emptyText}>No pending registrations</Text>
+              <Text style={styles.emptySubtext}>All dealer registrations have been processed</Text>
+            </View>
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -158,15 +229,70 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 16,
     backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  headerContent: {
+    flex: 1,
+  },
   title: {
     fontSize: 18,
     fontWeight: '600',
     color: colors.text,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.background,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    margin: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.2)',
+  },
+  errorText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: colors.error,
+  },
+  retryButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    backgroundColor: colors.error,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  retryButtonText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: colors.textSecondary,
   },
   listContent: {
     padding: 16,

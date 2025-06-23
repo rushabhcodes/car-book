@@ -5,4 +5,6 @@ export interface User {
   phone: string;
   role: 'admin' | 'dealer';
   status: 'active' | 'inactive' | 'pending';
+  created_at?: string;
+  updated_at?: string;
 }
