@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Platform } from 'react-native';
-import { Camera, X, Upload } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
 import colors from '@/constants/colors';
+import * as ImagePicker from 'expo-image-picker';
+import { Camera, X } from 'lucide-react-native';
+import React from 'react';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface MediaUploaderProps {
   images: string[];
@@ -20,7 +20,7 @@ export default function MediaUploader({
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,

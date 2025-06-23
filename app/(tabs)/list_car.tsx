@@ -17,7 +17,7 @@ import FormInput from '@/components/FormInput';
 import FormPicker from '@/components/FormPicker';
 import DatePicker from '@/components/DatePicker';
 import MediaUploader from '@/components/MediaUploader';
-import VideoUploader from '@/components/VideoUploader';
+// import VideoUploader from '@/components/VideoUploader';
 import { 
   brands, 
   transmissionTypes, 
@@ -41,7 +41,7 @@ export default function ListCarScreen() {
     setFormField, 
     addImage, 
     removeImage, 
-    setVideo, 
+    // setVideo, 
     validateForm, 
     submitListing,
     listings
@@ -53,7 +53,7 @@ export default function ListCarScreen() {
   // Count dealer's current listings
   const dealerListingsCount = listings.filter(listing => listing.dealerId === user?.id).length;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -74,7 +74,7 @@ export default function ListCarScreen() {
     
     const isValid = validateForm();
     if (isValid) {
-      const success = submitListing();
+      const success = await submitListing();
       if (success) {
         Alert.alert(
           "Success!",
@@ -200,11 +200,11 @@ export default function ListCarScreen() {
             error={errors.images}
           />
 
-          <VideoUploader
+          {/* <VideoUploader
             videoUri={form.video || ''}
             onVideoSelected={(uri) => setFormField('video', uri)}
             onVideoRemoved={() => setFormField('video', '')}
-          />
+          /> */}
         </FormSection>
 
         <FormSection title="Vehicle Details">
