@@ -3,9 +3,10 @@ import { useAuthStore } from '@/store/authStore';
 import { useDealerStore } from '@/store/dealerStore';
 import { useRouter } from 'expo-router';
 import { Bell, CreditCard, Edit, HelpCircle, LogOut, Shield } from 'lucide-react-native';
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
     Alert,
+    RefreshControl,
     ScrollView,
     StyleSheet,
     Text,
@@ -15,10 +16,18 @@ import {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, refreshUser } = useAuthStore();
   const { dealers } = useDealerStore();
   
   const currentDealer = dealers.find(dealer => dealer.id === user?.id);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshUser();
+    setRefreshing(false);
+  }, []);
   
   const handleLogout = () => {
     Alert.alert(
@@ -61,7 +70,11 @@ export default function ProfileScreen() {
   const subscriptionDetails = getSubscriptionDetails();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} 
+    refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+      >
       <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>
           <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'U'}</Text>

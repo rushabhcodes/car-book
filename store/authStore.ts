@@ -13,6 +13,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, phone: string, password: string, role?: 'admin' | 'dealer') => Promise<boolean>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   approveUser: (userId: string) => Promise<void>;
   rejectUser: (userId: string) => Promise<void>;
   getPendingUsersCount: () => number;
@@ -119,11 +120,11 @@ export const useAuthStore = create<AuthState>()(
               return false;
             }
 
-            if (userProfile?.status !== 'active') {
-              await supabase.auth.signOut();
-              console.error('Account not active');
-              return false;
-            }
+            // if (userProfile?.status !== 'active') {
+            //   await supabase.auth.signOut();
+            //   console.error('Account not active');
+            //   return false;
+            // }
 
             set({
               user: userProfile,
@@ -171,6 +172,24 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: false });
         }
       },
+      refreshUser: async () => {
+        const session = get().session;
+        if (!session?.user?.id) return;
+
+        const { data: userProfile, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) {
+          console.error('Error refreshing user:', error);
+          return;
+        }
+
+        set({ user: userProfile });
+      }
+      ,
 
       logout: async () => {
         try {

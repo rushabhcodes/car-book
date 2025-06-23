@@ -1,28 +1,30 @@
-import React, { useEffect } from "react";
-import { Tabs } from "expo-router";
-import { useRouter } from 'expo-router';
-import { Car, List, User } from "lucide-react-native";
 import colors from "@/constants/colors";
 import { useAuthStore } from "@/store/authStore";
+import { Tabs, useRouter } from "expo-router";
+import { Car, List, User } from "lucide-react-native";
+import { useEffect } from "react";
 
 export default function TabLayout() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userStatus = useAuthStore((state) => state.user?.status);
+  const userRole = useAuthStore((state) => state.user?.role);
 
   // Protect dealer routes
   useEffect(() => {
     if (!isAuthenticated) {
-      router.replace('/');
+      router.replace("/");
       return;
     }
-    
-    if (user?.role === 'admin') {
-      router.replace('/(admin)/dashboard');
+
+    if (userRole === "admin") {
+      router.replace("/(admin)/dashboard");
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, userRole, userStatus, router]);
 
   return (
     <Tabs
+      key={userStatus}
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         headerShown: true,
@@ -35,23 +37,24 @@ export default function TabLayout() {
         },
         headerTitleStyle: {
           color: colors.text,
-          fontWeight: '600',
+          fontWeight: "600",
         },
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="list_car"
         options={{
-          title: "List Your Car",
-          tabBarIcon: ({ color }) => <Car size={24} color={color} />,
-          tabBarLabel: "List Car",
+          href: userStatus === "pending" ? null : undefined,
+          title: "List your vehicle",
+          tabBarIcon: ({ color }) => <List size={24} color={color} />,
+          tabBarLabel: "List Vehicle",
         }}
       />
       <Tabs.Screen
-        name="listings"
+        name="index"
         options={{
-          title: "My Listings",
-          tabBarIcon: ({ color }) => <List size={24} color={color} />,
+          title: "Listing",
+          tabBarIcon: ({ color }) => <Car size={24} color={color} />,
           tabBarLabel: "Listings",
         }}
       />

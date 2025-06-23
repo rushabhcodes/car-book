@@ -1,314 +1,413 @@
-import React, { useRef } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
-  TouchableOpacity, 
-  Alert,
-  Platform,
-  KeyboardAvoidingView
-} from 'react-native';
-import { useCarListingStore } from '@/store/carListingStore';
-import { useAuthStore } from '@/store/authStore';
-import { useDealerStore } from '@/store/dealerStore';
-import FormSection from '@/components/FormSection';
-import FormInput from '@/components/FormInput';
-import FormPicker from '@/components/FormPicker';
-import DatePicker from '@/components/DatePicker';
-import MediaUploader from '@/components/MediaUploader';
-import VideoUploader from '@/components/VideoUploader';
-import { 
-  brands, 
-  transmissionTypes, 
-  rtoNumbers, 
-  colors as carColors, 
-  ownershipOptions, 
-  fuelTypes, 
-  insuranceTypes 
-} from '@/constants/carData';
 import colors from '@/constants/colors';
+import { useAuthStore } from '@/store/authStore';
+import { useCarListingStore } from '@/store/carListingStore';
+import { useDealerStore } from '@/store/dealerStore';
+import { CarListing } from '@/types/car';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
+import { Car, Edit, Trash2, X } from 'lucide-react-native';
+import React, { useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Image,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
-export default function ListCarScreen() {
-  const scrollViewRef = useRef<ScrollView>(null);
+export default function ListingsScreen() {
   const { user } = useAuthStore();
-  const { getDealerListingLimit } = useDealerStore();
-  const { 
-    form, 
-    errors, 
-    setFormField, 
-    addImage, 
-    removeImage, 
-    setVideo, 
-    validateForm, 
-    submitListing,
-    listings
-  } = useCarListingStore();
-
-  // Get dealer's listing limit
-  const listingLimit = getDealerListingLimit(user?.id || '');
+  const { dealers } = useDealerStore();
+  const { listings, deleteListing } = useCarListingStore();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedListing, setSelectedListing] = useState<CarListing | null>(null);
+  const [showAllListings, setShowAllListings] = useState(true);
   
-  // Count dealer's current listings
-  const dealerListingsCount = listings.filter(listing => listing.dealerId === user?.id).length;
+  // Filter listings based on the toggle
+  const filteredListings = showAllListings 
+    ? listings 
+    : listings.filter(listing => listing.dealerId === user?.id);
 
-  const handleSubmit = () => {
+  const getDealerName = (dealerId: string) => {
+    const dealer = dealers.find(d => d.id === dealerId);
+    return dealer ? dealer.name : 'Unknown Dealer';
+  };
+
+  const handleViewDetails = (listing: CarListing) => {
+    setSelectedListing(listing);
+    setModalVisible(true);
+  };
+
+  const handleEdit = (listing: CarListing) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    Alert.alert(
+      "Edit Listing",
+      "This feature is coming soon!",
+      [{ text: "OK" }]
+    );
+  };
+
+  const handleDelete = (id: string) => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    
-    // Check if dealer has reached their listing limit
-    if (dealerListingsCount >= listingLimit) {
-      Alert.alert(
-        "Listing Limit Reached",
-        `You have reached your limit of ${listingLimit} listings. Please contact admin to upgrade your subscription.`,
-        [{ text: "OK" }]
-      );
-      return;
-    }
-    
-    // Set the dealer ID before submitting
-    setFormField('dealerId', user?.id || '');
-    setFormField('status', 'pending');
-    
-    const isValid = validateForm();
-    if (isValid) {
-      const success = submitListing();
-      if (success) {
-        Alert.alert(
-          "Success!",
-          "Your car has been listed successfully and is pending approval.",
-          [
-            { 
-              text: "View Listings", 
-              onPress: () => router.push('/listings') 
-            },
-            { 
-              text: "OK", 
-              style: "default" 
-            }
-          ]
-        );
-      }
-    } else {
-      // Find the first error and scroll to it
-      const firstErrorField = Object.keys(errors)[0];
-      if (firstErrorField && scrollViewRef.current) {
-        // This is a simplified approach - in a real app you'd need refs for each field
-        scrollViewRef.current.scrollTo({ y: 0, animated: true });
-      }
-      
-      Alert.alert(
-        "Validation Error",
-        "Please check the form for errors and try again.",
-        [{ text: "OK" }]
-      );
-    }
+    Alert.alert(
+      "Delete Listing",
+      "Are you sure you want to delete this listing?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: () => {
+            deleteListing(id);
+            setModalVisible(false);
+            Alert.alert("Deleted", "Listing has been deleted.");
+          }
+        }
+      ]
+    );
   };
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={100}
-    >
-      <ScrollView 
-        ref={scrollViewRef}
-        style={styles.scrollView}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.listingLimitContainer}>
-          <Text style={styles.listingLimitText}>
-            Listing {dealerListingsCount} of {listingLimit} available
-          </Text>
-          <View style={styles.progressBar}>
-            <View 
-              style={[
-                styles.progressFill, 
-                { width: `${(dealerListingsCount / listingLimit) * 100}%` }
-              ]} 
-            />
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const renderItem = ({ item }: { item: CarListing }) => {
+    const isOwnListing = item.dealerId === user?.id;
+    
+    return (
+      <View style={styles.card}>
+        <View style={styles.imageContainer}>
+          {item.images && item.images.length > 0 ? (
+            <Image source={{ uri: item.images[0] }} style={styles.image} />
+          ) : (
+            <View style={styles.noImageContainer}>
+              <Car size={40} color={colors.textSecondary} />
+              <Text style={styles.noImageText}>No Image</Text>
+            </View>
+          )}
+          <View style={[
+            styles.statusBadge,
+            item.status === 'approved' ? styles.approvedBadge :
+            item.status === 'rejected' ? styles.rejectedBadge :
+            styles.pendingBadge
+          ]}>
+            <Text style={[
+              styles.statusText,
+              item.status === 'approved' ? styles.approvedText :
+              item.status === 'rejected' ? styles.rejectedText :
+              styles.pendingText
+            ]}>
+              {item.status === 'approved' ? 'Approved' :
+               item.status === 'rejected' ? 'Rejected' : 'Pending'}
+            </Text>
           </View>
         </View>
-
-        <FormSection title="Vehicle Identity">
-          <View style={styles.row}>
-            <View style={styles.halfColumn}>
-              <FormInput
-                label="Registration Year"
-                value={form.registrationYear}
-                onChangeText={(text) => setFormField('registrationYear', text)}
-                placeholder="e.g. 2020"
-                keyboardType="numeric"
-                error={errors.registrationYear}
-                maxLength={4}
-              />
+        
+        <View style={styles.cardContent}>
+          <Text style={styles.title}>{item.brand} {item.model}</Text>
+          <Text style={styles.subtitle}>{item.manufacturingYear} • {item.transmissionType} • {item.fuelType}</Text>
+          
+          {!isOwnListing && (
+            <View style={styles.dealerContainer}>
+              <Text style={styles.dealerLabel}>Listed by:</Text>
+              <Text style={styles.dealerName}>{getDealerName(item.dealerId)}</Text>
             </View>
-            <View style={styles.halfColumn}>
-              <FormInput
-                label="Manufacturing Year"
-                value={form.manufacturingYear}
-                onChangeText={(text) => setFormField('manufacturingYear', text)}
-                placeholder="e.g. 2019"
-                keyboardType="numeric"
-                error={errors.manufacturingYear}
-                maxLength={4}
-              />
+          )}
+          
+          <View style={styles.detailsRow}>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>KM Driven</Text>
+              <Text style={styles.detailValue}>{item.kilometersDriven || 'N/A'}</Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Owner</Text>
+              <Text style={styles.detailValue}>{item.ownershipHistory || 'N/A'}</Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>RTO</Text>
+              <Text style={styles.detailValue}>{item.rtoNumber?.split(' - ')[0] || 'N/A'}</Text>
             </View>
           </View>
+          
+          <View style={styles.priceContainer}>
+            <Text style={styles.priceLabel}>Asking Price</Text>
+            <Text style={styles.price}>₹{parseInt(item.askingPrice || '0').toLocaleString('en-IN')}</Text>
+          </View>
+          
+          <View style={styles.actions}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.viewButton]} 
+              onPress={() => handleViewDetails(item)}
+            >
+              <Text style={styles.viewButtonText}>View Details</Text>
+            </TouchableOpacity>
+            
+            {isOwnListing && (
+              <View style={styles.actionButtonsGroup}>
+                <TouchableOpacity 
+                  style={[styles.actionButton, styles.editButton]} 
+                  onPress={() => handleEdit(item)}
+                >
+                  <Edit size={16} color="#FFF" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.actionButton, styles.deleteButton]} 
+                  onPress={() => handleDelete(item.id)}
+                >
+                  <Trash2 size={16} color="#FFF" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  };
 
-          <FormPicker
-            label="Brand"
-            value={form.brand}
-            onValueChange={(value) => setFormField('brand', value)}
-            items={brands}
-            error={errors.brand}
-          />
+  const EmptyListComponent = () => (
+    <View style={styles.emptyContainer}>
+      <Car size={64} color={colors.textSecondary} />
+      <Text style={styles.emptyTitle}>No Listings Yet</Text>
+      <Text style={styles.emptySubtitle}>
+        {showAllListings 
+          ? "There are no car listings available yet" 
+          : "Your car listings will appear here"}
+      </Text>
+    </View>
+  );
 
-          <FormInput
-            label="Model"
-            value={form.model}
-            onChangeText={(text) => setFormField('model', text)}
-            placeholder="e.g. Swift, City, Creta"
-            error={errors.model}
-          />
-
-          <FormPicker
-            label="Transmission Type"
-            value={form.transmissionType}
-            onValueChange={(value) => setFormField('transmissionType', value)}
-            items={transmissionTypes}
-            error={errors.transmissionType}
-          />
-
-          <FormPicker
-            label="RTO Number"
-            value={form.rtoNumber}
-            onValueChange={(value) => setFormField('rtoNumber', value)}
-            items={rtoNumbers}
-            error={errors.rtoNumber}
-          />
-        </FormSection>
-
-        <FormSection title="Media Upload">
-          <MediaUploader
-            images={form.images}
-            onAddImage={addImage}
-            onRemoveImage={removeImage}
-            error={errors.images}
-          />
-
-          <VideoUploader
-            videoUri={form.video || ''}
-            onVideoSelected={(uri) => setFormField('video', uri)}
-            onVideoRemoved={() => setFormField('video', '')}
-          />
-        </FormSection>
-
-        <FormSection title="Vehicle Details">
-          <FormPicker
-            label="Color"
-            value={form.color}
-            onValueChange={(value) => setFormField('color', value)}
-            items={carColors}
-            error={errors.color}
-          />
-
-          <FormPicker
-            label="Ownership History"
-            value={form.ownershipHistory}
-            onValueChange={(value) => setFormField('ownershipHistory', value)}
-            items={ownershipOptions}
-            error={errors.ownershipHistory}
-          />
-
-          <FormInput
-            label="Kilometers Driven"
-            value={form.kilometersDriven}
-            onChangeText={(text) => setFormField('kilometersDriven', text)}
-            placeholder="e.g. 25000"
-            keyboardType="numeric"
-            error={errors.kilometersDriven}
-          />
-
-          <FormPicker
-            label="Fuel Type"
-            value={form.fuelType}
-            onValueChange={(value) => setFormField('fuelType', value)}
-            items={fuelTypes}
-            error={errors.fuelType}
-          />
-
-          <DatePicker
-            label="Insurance Validity"
-            value={form.insuranceValidity}
-            onValueChange={(value) => setFormField('insuranceValidity', value)}
-            error={errors.insuranceValidity}
-          />
-
-          <FormPicker
-            label="Insurance Type"
-            value={form.insuranceType}
-            onValueChange={(value) => setFormField('insuranceType', value)}
-            items={insuranceTypes}
-            error={errors.insuranceType}
-          />
-        </FormSection>
-
-        <FormSection title="Pricing">
-          <FormInput
-            label="Asking Price (₹)"
-            value={form.askingPrice}
-            onChangeText={(text) => setFormField('askingPrice', text)}
-            placeholder="e.g. 500000"
-            keyboardType="numeric"
-            error={errors.askingPrice}
-          />
-
-          <FormInput
-            label="Already Offered Price (₹)"
-            value={form.offeredPrice}
-            onChangeText={(text) => setFormField('offeredPrice', text)}
-            placeholder="e.g. 450000"
-            keyboardType="numeric"
-            error={errors.offeredPrice}
-          />
-
-          <FormInput
-            label="You Can Offer (₹)"
-            value={form.youCanOffer}
-            onChangeText={(text) => setFormField('youCanOffer', text)}
-            placeholder="e.g. 475000"
-            keyboardType="numeric"
-            error={errors.youCanOffer}
-          />
-
-          <FormInput
-            label="WhatsApp Contact Number"
-            value={form.whatsappNumber}
-            onChangeText={(text) => setFormField('whatsappNumber', text)}
-            placeholder="10-digit number"
-            keyboardType="phone-pad"
-            error={errors.whatsappNumber}
-            maxLength={10}
-          />
-        </FormSection>
-
+  return (
+    <View style={styles.container}>
+      <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[
-            styles.submitButton,
-            dealerListingsCount >= listingLimit && styles.submitButtonDisabled
+            styles.filterButton,
+            showAllListings && styles.filterButtonActive
           ]}
-          onPress={handleSubmit}
-          activeOpacity={0.8}
-          disabled={dealerListingsCount >= listingLimit}
+          onPress={() => setShowAllListings(true)}
         >
-          <Text style={styles.submitButtonText}>List My Car</Text>
+          <Text style={[
+            styles.filterButtonText,
+            showAllListings && styles.filterButtonTextActive
+          ]}>All Listings</Text>
         </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            !showAllListings && styles.filterButtonActive
+          ]}
+          onPress={() => setShowAllListings(false)}
+        >
+          <Text style={[
+            styles.filterButtonText,
+            !showAllListings && styles.filterButtonTextActive
+          ]}>My Listings</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <FlatList
+        data={filteredListings}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={EmptyListComponent}
+      />
+      
+      {selectedListing && (
+        <Modal
+          visible={modalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Listing Details</Text>
+                <TouchableOpacity 
+                  style={styles.closeButton}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <X size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView style={styles.modalBody}>
+                <View style={styles.imageGallery}>
+                  {selectedListing.images && selectedListing.images.length > 0 ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      {selectedListing.images.map((uri, index) => (
+                        <Image key={index} source={{ uri }} style={styles.galleryImage} />
+                      ))}
+                    </ScrollView>
+                  ) : (
+                    <View style={styles.noGalleryImageContainer}>
+                      <Car size={40} color={colors.textSecondary} />
+                      <Text style={styles.noImageText}>No Images Available</Text>
+                    </View>
+                  )}
+                </View>
+                
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Vehicle Information</Text>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Brand & Model:</Text>
+                    <Text style={styles.detailRowValue}>{selectedListing.brand} {selectedListing.model}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Manufacturing Year:</Text>
+                    <Text style={styles.detailRowValue}>{selectedListing.manufacturingYear}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Registration Year:</Text>
+                    <Text style={styles.detailRowValue}>{selectedListing.registrationYear}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Transmission:</Text>
+                    <Text style={styles.detailRowValue}>{selectedListing.transmissionType}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Fuel Type:</Text>
+                    <Text style={styles.detailRowValue}>{selectedListing.fuelType}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Color:</Text>
+                    <Text style={styles.detailRowValue}>{selectedListing.color}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>RTO:</Text>
+                    <Text style={styles.detailRowValue}>{selectedListing.rtoNumber}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Kilometers Driven:</Text>
+                    <Text style={styles.detailRowValue}>{selectedListing.kilometersDriven} km</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Ownership:</Text>
+                    <Text style={styles.detailRowValue}>{selectedListing.ownershipHistory}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Insurance Details</Text>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Insurance Type:</Text>
+                    <Text style={styles.detailRowValue}>{selectedListing.insuranceType}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Validity:</Text>
+                    <Text style={styles.detailRowValue}>
+                      {selectedListing.insuranceValidity ? formatDate(selectedListing.insuranceValidity) : 'N/A'}
+                    </Text>
+                  </View>
+                </View>
+                
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Pricing</Text>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Asking Price:</Text>
+                    <Text style={styles.priceValue}>₹{parseInt(selectedListing.askingPrice || '0').toLocaleString('en-IN')}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Offered Price:</Text>
+                    <Text style={styles.detailRowValue}>₹{parseInt(selectedListing.offeredPrice || '0').toLocaleString('en-IN')}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>You Can Offer:</Text>
+                    <Text style={styles.detailRowValue}>₹{parseInt(selectedListing.youCanOffer || '0').toLocaleString('en-IN')}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Contact Information</Text>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>Dealer:</Text>
+                    <Text style={styles.detailRowValue}>{getDealerName(selectedListing.dealerId)}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailRowLabel}>WhatsApp:</Text>
+                    <Text style={styles.detailRowValue}>{selectedListing.whatsappNumber}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Listing Status</Text>
+                  
+                  <View style={[
+                    styles.statusContainer,
+                    selectedListing.status === 'approved' ? styles.approvedContainer :
+                    selectedListing.status === 'rejected' ? styles.rejectedContainer :
+                    styles.pendingContainer
+                  ]}>
+                    <Text style={[
+                      styles.statusDetailText,
+                      selectedListing.status === 'approved' ? styles.approvedText :
+                      selectedListing.status === 'rejected' ? styles.rejectedText :
+                      styles.pendingText
+                    ]}>
+                      {selectedListing.status === 'approved' ? 'Approved' :
+                       selectedListing.status === 'rejected' ? 'Rejected' : 'Pending Approval'}
+                    </Text>
+                  </View>
+                </View>
+              </ScrollView>
+              
+              {selectedListing.dealerId === user?.id && (
+                <View style={styles.modalFooter}>
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.editModalButton]} 
+                    onPress={() => {
+                      handleEdit(selectedListing);
+                      setModalVisible(false);
+                    }}
+                  >
+                    <Edit size={16} color="#FFF" />
+                    <Text style={styles.editModalButtonText}>Edit Listing</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.deleteModalButton]} 
+                    onPress={() => handleDelete(selectedListing.id)}
+                  >
+                    <Trash2 size={16} color="#FFF" />
+                    <Text style={styles.deleteModalButtonText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+        </Modal>
+      )}
+    </View>
   );
 }
 
@@ -317,68 +416,339 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollView: {
-    flex: 1,
+  filterContainer: {
+    flexDirection: 'row',
+    padding: 12,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  contentContainer: {
+  filterButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  filterButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+  },
+  filterButtonTextActive: {
+    color: '#FFF',
+  },
+  listContent: {
     padding: 16,
     paddingBottom: 40,
+    flexGrow: 1,
   },
-  listingLimitContainer: {
+  card: {
     backgroundColor: colors.card,
     borderRadius: 12,
-    padding: 16,
     marginBottom: 16,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
   },
-  listingLimitText: {
+  imageContainer: {
+    height: 180,
+    backgroundColor: colors.inputBackground,
+    position: 'relative',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  noImageContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noImageText: {
+    color: colors.textSecondary,
+    marginTop: 8,
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  approvedBadge: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+  },
+  rejectedBadge: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  pendingBadge: {
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  approvedText: {
+    color: colors.success,
+  },
+  rejectedText: {
+    color: colors.error,
+  },
+  pendingText: {
+    color: colors.secondary,
+  },
+  cardContent: {
+    padding: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  dealerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  dealerLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  dealerName: {
     fontSize: 14,
     fontWeight: '500',
     color: colors.text,
-    marginBottom: 8,
+    marginLeft: 4,
   },
-  progressBar: {
-    height: 8,
-    backgroundColor: colors.inputBackground,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 4,
-  },
-  row: {
+  detailsRow: {
     flexDirection: 'row',
-    marginHorizontal: -6,
+    marginTop: 16,
+    marginBottom: 16,
   },
-  halfColumn: {
+  detailItem: {
     flex: 1,
-    paddingHorizontal: 6,
   },
-  submitButton: {
+  detailLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  detailValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+    marginTop: 2,
+  },
+  priceContainer: {
+    marginBottom: 16,
+  },
+  priceLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  price: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  actionButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 6,
+  },
+  viewButton: {
     backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
-    marginTop: 24,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
-  submitButtonDisabled: {
-    backgroundColor: colors.textSecondary,
-    opacity: 0.7,
-  },
-  submitButtonText: {
+  viewButtonText: {
     color: '#FFF',
+    fontWeight: '500',
+  },
+  actionButtonsGroup: {
+    flexDirection: 'row',
+  },
+  editButton: {
+    backgroundColor: colors.primary,
+    width: 36,
+    height: 36,
+    marginRight: 8,
+  },
+  deleteButton: {
+    backgroundColor: colors.error,
+    width: 36,
+    height: 36,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    textAlign: 'center',
+    color: colors.text,
+    marginTop: 16,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 8,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalBody: {
+    padding: 16,
+    maxHeight: 500,
+  },
+  imageGallery: {
+    height: 200,
+    marginBottom: 16,
+  },
+  galleryImage: {
+    width: 280,
+    height: 200,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  noGalleryImageContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.inputBackground,
+    borderRadius: 8,
+  },
+  detailSection: {
+    marginBottom: 20,
+  },
+  detailSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  detailRowLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  detailRowValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+    flex: 1,
+    textAlign: 'right',
+  },
+  priceValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.primary,
+    flex: 1,
+    textAlign: 'right',
+  },
+  statusContainer: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  approvedContainer: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+  },
+  rejectedContainer: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  pendingContainer: {
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+  },
+  statusDetailText: {
+    fontWeight: '500',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  editModalButton: {
+    backgroundColor: colors.primary,
+    marginRight: 8,
+  },
+  deleteModalButton: {
+    backgroundColor: colors.error,
+    marginLeft: 8,
+  },
+  editModalButtonText: {
+    color: '#FFF',
+    fontWeight: '500',
+    marginLeft: 6,
+  },
+  deleteModalButtonText: {
+    color: '#FFF',
+    fontWeight: '500',
+    marginLeft: 6,
   },
 });

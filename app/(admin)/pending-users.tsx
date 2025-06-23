@@ -3,8 +3,8 @@ import { useAuthStore } from "@/store/authStore";
 import { useDealerStore } from "@/store/dealerStore";
 import { User } from "@/types/auth";
 import { Dealer } from "@/types/dealer";
-import { AlertCircle, Check, RefreshCw, X } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import { AlertCircle, Check, Pen, RefreshCw, X } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
