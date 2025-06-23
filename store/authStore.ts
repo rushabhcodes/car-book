@@ -28,14 +28,14 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       pendingUsers: [],
       isLoading: false,
-      
+
       initialize: async () => {
         try {
           set({ isLoading: true });
-          
+
           // Get initial session
           const { data: { session }, error } = await supabase.auth.getSession();
-          
+
           if (error) {
             console.error('Error getting session:', error);
             return;
@@ -91,11 +91,11 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: false });
         }
       },
-      
+
       login: async (email, password) => {
         try {
           set({ isLoading: true });
-          
+
           const { data, error } = await supabase.auth.signInWithPassword({
             email: email.toLowerCase().trim(),
             password,
@@ -132,7 +132,7 @@ export const useAuthStore = create<AuthState>()(
             });
             return true;
           }
-          
+
           return false;
         } catch (error) {
           console.error('Login error:', error);
@@ -145,7 +145,7 @@ export const useAuthStore = create<AuthState>()(
       register: async (name, email, phone, password, role = 'dealer') => {
         try {
           set({ isLoading: true });
-          
+
           const { data, error } = await supabase.auth.signUp({
             email: email.toLowerCase().trim(),
             password,
@@ -192,6 +192,7 @@ export const useAuthStore = create<AuthState>()(
             .select('*')
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
+
 
           if (error) {
             console.error('Error fetching pending users:', error);
