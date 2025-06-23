@@ -1,43 +1,66 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import React, { useEffect } from "react";
+import { Tabs } from "expo-router";
+import { useRouter } from 'expo-router';
+import { Car, List, User } from "lucide-react-native";
+import colors from "@/constants/colors";
+import { useAuthStore } from "@/store/authStore";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const router = useRouter();
+  const { isAuthenticated, user } = useAuthStore();
+
+  // Protect dealer routes
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/');
+      return;
+    }
+    
+    if (user?.role === 'admin') {
+      router.replace('/(admin)/dashboard');
+    }
+  }, [isAuthenticated, user, router]);
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
+        tabBarActiveTintColor: colors.primary,
+        headerShown: true,
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+        },
+        headerStyle: {
+          backgroundColor: colors.card,
+        },
+        headerTitleStyle: {
+          color: colors.text,
+          fontWeight: '600',
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "List Your Car",
+          tabBarIcon: ({ color }) => <Car size={24} color={color} />,
+          tabBarLabel: "List Car",
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="listings"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "My Listings",
+          tabBarIcon: ({ color }) => <List size={24} color={color} />,
+          tabBarLabel: "Listings",
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "My Profile",
+          tabBarIcon: ({ color }) => <User size={24} color={color} />,
+          tabBarLabel: "Profile",
         }}
       />
     </Tabs>
