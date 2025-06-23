@@ -1,20 +1,20 @@
+import colors from '@/constants/colors';
+import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'expo-router';
+import { Eye, EyeOff } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Alert
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/store/authStore';
-import colors from '@/constants/colors';
-import { Eye, EyeOff } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -89,7 +89,7 @@ export default function LoginScreen() {
 
         <View style={styles.formContainer}>
           <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue to CarDekho</Text>
+          <Text style={styles.subtitle}>Sign in to continue to CarBook</Text>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Email</Text>

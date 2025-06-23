@@ -1,18 +1,17 @@
-import React from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
-  TouchableOpacity, 
-  Alert,
-  Image
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { LogOut, CreditCard, Edit, Bell, Shield, HelpCircle } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useAuthStore } from '@/store/authStore';
 import { useDealerStore } from '@/store/dealerStore';
+import { useRouter } from 'expo-router';
+import { Bell, CreditCard, Edit, HelpCircle, LogOut, Shield } from 'lucide-react-native';
+import React from 'react';
+import {
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -166,8 +165,8 @@ export default function ProfileScreen() {
       </TouchableOpacity>
       
       <View style={styles.footer}>
-        <Text style={styles.footerText}>CarDekho v1.0.0</Text>
-        <Text style={styles.footerText}>© 2023 CarDekho. All rights reserved.</Text>
+        <Text style={styles.footerText}>CarBook v1.0.0</Text>
+        <Text style={styles.footerText}>© 2025 CarBook. All rights reserved.</Text>
       </View>
     </ScrollView>
   );

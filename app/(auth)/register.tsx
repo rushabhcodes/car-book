@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TextInput, 
-  TouchableOpacity, 
-  KeyboardAvoidingView, 
-  Platform,
-  ScrollView,
-  Alert
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/store/authStore';
 import colors from '@/constants/colors';
+import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'expo-router';
 import { Eye, EyeOff } from 'lucide-react-native';
+import React, { useState } from 'react';
+import {
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -86,7 +86,7 @@ export default function RegisterScreen() {
       >
         <View style={styles.formContainer}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join CarDekho as a dealer</Text>
+          <Text style={styles.subtitle}>Join CarBook as a dealer</Text>
           
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Full Name</Text>
