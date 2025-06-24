@@ -2,7 +2,7 @@ import colors from '@/constants/colors';
 import { useDealerStore } from '@/store/dealerStore';
 import { Dealer, Subscription } from '@/types/dealer';
 import { AlertCircle, Check, Edit, Plus, Trash2, X } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -16,7 +16,11 @@ import {
 } from 'react-native';
 
 export default function DealersScreen() {
-  const { dealers, addDealer, updateDealer, deleteDealer } = useDealerStore();
+  const { dealers, addDealer, updateDealer, deleteDealer, fetchDealers } = useDealerStore();
+  useEffect(() => {
+    fetchDealers();
+  }, []);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentDealer, setCurrentDealer] = useState<Dealer | null>(null);

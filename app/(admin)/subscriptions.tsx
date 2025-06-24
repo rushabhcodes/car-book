@@ -2,7 +2,7 @@ import colors from '@/constants/colors';
 import { useDealerStore } from '@/store/dealerStore';
 import { Dealer, Subscription } from '@/types/dealer';
 import { AlertCircle, Check, Edit, X } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -15,7 +15,21 @@ import {
 } from 'react-native';
 
 export default function SubscriptionsScreen() {
-  const { dealers, updateDealer } = useDealerStore();
+  const { dealers, updateDealer, fetchDealers } = useDealerStore();
+  useEffect(() => {
+    fetchDealers();
+  }, []);
+
+  if (!dealers || dealers.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <AlertCircle size={48} color={colors.textSecondary} />
+        <Text style={styles.emptyText}>No dealers found</Text>
+        <Text style={styles.emptySubtext}>Add dealers to manage their subscriptions</Text>
+      </View>
+    );
+  }
+  
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
   const [subscriptionForm, setSubscriptionForm] = useState<Subscription>({
@@ -164,7 +178,13 @@ export default function SubscriptionsScreen() {
       <FlatList
         data={dealers}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => {
+          if (!item.id) {
+            console.warn('Dealer with missing id:', item);
+            return `dealer-missing-id-${index}`;
+          }
+          return item.id + '-' + index; // Add index to ensure uniqueness
+        }}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
