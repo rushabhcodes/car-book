@@ -13,7 +13,7 @@ export interface CarListing {
   
   // Media
   images: string[];
-  video?: string;
+  // video?: string;
   
   // Vehicle Details
   color: string;
@@ -25,13 +25,15 @@ export interface CarListing {
   
   // Pricing
   askingPrice: string;
-  offeredPrice: string;
-  youCanOffer: string;
   whatsappNumber: string;
   
   // Work History
   repairsNeededAudio?: string;
   repairsCompletedAudio?: string;
+  
+  // Timestamps (optional, from database)
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface FormErrors {

@@ -29,7 +29,6 @@ import {
 } from '@/constants/carData';
 import colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
 
 export default function ListCarScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
@@ -265,24 +264,6 @@ export default function ListCarScreen() {
             placeholder="e.g. 500000"
             keyboardType="numeric"
             error={errors.askingPrice}
-          />
-
-          <FormInput
-            label="Already Offered Price (₹)"
-            value={form.offeredPrice}
-            onChangeText={(text) => setFormField('offeredPrice', text)}
-            placeholder="e.g. 450000"
-            keyboardType="numeric"
-            error={errors.offeredPrice}
-          />
-
-          <FormInput
-            label="You Can Offer (₹)"
-            value={form.youCanOffer}
-            onChangeText={(text) => setFormField('youCanOffer', text)}
-            placeholder="e.g. 475000"
-            keyboardType="numeric"
-            error={errors.youCanOffer}
           />
 
           <FormInput

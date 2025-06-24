@@ -7,16 +7,16 @@ import * as Haptics from 'expo-haptics';
 import { Car, Edit, Trash2, X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-  Alert,
-  FlatList,
-  Image,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Alert,
+    FlatList,
+    Image,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 export default function ListingsScreen() {
@@ -332,16 +332,6 @@ export default function ListingsScreen() {
                   <View style={styles.detailRow}>
                     <Text style={styles.detailRowLabel}>Asking Price:</Text>
                     <Text style={styles.priceValue}>₹{parseInt(selectedListing.askingPrice || '0').toLocaleString('en-IN')}</Text>
-                  </View>
-                  
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailRowLabel}>Offered Price:</Text>
-                    <Text style={styles.detailRowValue}>₹{parseInt(selectedListing.offeredPrice || '0').toLocaleString('en-IN')}</Text>
-                  </View>
-                  
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailRowLabel}>You Can Offer:</Text>
-                    <Text style={styles.detailRowValue}>₹{parseInt(selectedListing.youCanOffer || '0').toLocaleString('en-IN')}</Text>
                   </View>
                 </View>
                 

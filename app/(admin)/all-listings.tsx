@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  FlatList, 
-  Image, 
-  TouchableOpacity, 
-  Alert,
-  Modal,
-  ScrollView
-} from 'react-native';
+import colors from '@/constants/colors';
 import { useCarListingStore } from '@/store/carListingStore';
 import { useDealerStore } from '@/store/dealerStore';
-import { Car, Check, X, AlertCircle } from 'lucide-react-native';
-import colors from '@/constants/colors';
 import { CarListing } from '@/types/car';
+import { AlertCircle, Car, Check, X } from 'lucide-react-native';
+import React, { useState } from 'react';
+import {
+    Alert,
+    FlatList,
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 export default function AllListingsScreen() {
   const { listings, updateListing, deleteListing } = useCarListingStore();
@@ -344,16 +344,6 @@ export default function AllListingsScreen() {
                   <View style={styles.detailRow}>
                     <Text style={styles.detailRowLabel}>Asking Price:</Text>
                     <Text style={styles.priceValue}>₹{parseInt(selectedListing.askingPrice || '0').toLocaleString('en-IN')}</Text>
-                  </View>
-                  
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailRowLabel}>Offered Price:</Text>
-                    <Text style={styles.detailRowValue}>₹{parseInt(selectedListing.offeredPrice || '0').toLocaleString('en-IN')}</Text>
-                  </View>
-                  
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailRowLabel}>You Can Offer:</Text>
-                    <Text style={styles.detailRowValue}>₹{parseInt(selectedListing.youCanOffer || '0').toLocaleString('en-IN')}</Text>
                   </View>
                 </View>
                 

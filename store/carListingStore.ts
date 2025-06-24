@@ -43,8 +43,6 @@ const initialForm: CarListing = {
   insuranceValidity: '',
   insuranceType: '',
   askingPrice: '',
-  offeredPrice: '',
-  youCanOffer: '',
   whatsappNumber: '',
 };
 
@@ -126,14 +124,6 @@ export const useCarListingStore = create<CarListingState>()(
 
         if (form.askingPrice && !/^\d+$/.test(form.askingPrice)) {
           errors.askingPrice = 'Enter a valid amount';
-        }
-
-        if (form.offeredPrice && !/^\d+$/.test(form.offeredPrice)) {
-          errors.offeredPrice = 'Enter a valid amount';
-        }
-
-        if (form.youCanOffer && !/^\d+$/.test(form.youCanOffer)) {
-          errors.youCanOffer = 'Enter a valid amount';
         }
 
         // Validate WhatsApp number (10 digits for India)
@@ -320,8 +310,6 @@ export const useCarListingStore = create<CarListingState>()(
             insurance_validity: form.insuranceValidity,
             insurance_type: form.insuranceType,
             asking_price: form.askingPrice,
-            offered_price: form.offeredPrice,
-            you_can_offer: form.youCanOffer,
             whatsapp_number: form.whatsappNumber,
           };
 
@@ -417,8 +405,6 @@ export const useCarListingStore = create<CarListingState>()(
             insuranceValidity: listing.insurance_validity,
             insuranceType: listing.insurance_type,
             askingPrice: listing.asking_price,
-            offeredPrice: listing.offered_price,
-            youCanOffer: listing.you_can_offer,
             whatsappNumber: listing.whatsapp_number,
             images: listing.listing_media
               ?.filter((media: any) => media.file_type === 'image')
@@ -471,8 +457,6 @@ export const useCarListingStore = create<CarListingState>()(
             insuranceValidity: listing.insurance_validity,
             insuranceType: listing.insurance_type,
             askingPrice: listing.asking_price,
-            offeredPrice: listing.offered_price,
-            youCanOffer: listing.you_can_offer,
             whatsappNumber: listing.whatsapp_number,
             images: listing.listing_media
               ?.filter((media: any) => media.file_type === 'image')
@@ -503,8 +487,6 @@ export const useCarListingStore = create<CarListingState>()(
             insurance_validity: updatedListing.insuranceValidity,
             insurance_type: updatedListing.insuranceType,
             asking_price: updatedListing.askingPrice,
-            offered_price: updatedListing.offeredPrice,
-            you_can_offer: updatedListing.youCanOffer,
             whatsapp_number: updatedListing.whatsappNumber,
           };
 

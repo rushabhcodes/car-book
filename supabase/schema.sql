@@ -34,8 +34,6 @@ CREATE TABLE public.car_listings (
   
   -- Pricing
   asking_price TEXT NOT NULL,
-  offered_price TEXT NOT NULL,
-  you_can_offer TEXT NOT NULL,
   whatsapp_number TEXT NOT NULL,
   
   -- Timestamps

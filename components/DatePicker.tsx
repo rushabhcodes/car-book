@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { Calendar } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Calendar } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface DatePickerProps {
   label: string;
@@ -19,6 +20,7 @@ export default function DatePicker({
   error,
 }: DatePickerProps) {
   const [date, setDate] = useState<Date | null>(value ? new Date(value) : null);
+  const [showPicker, setShowPicker] = useState(false);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
@@ -31,8 +33,6 @@ export default function DatePicker({
       onValueChange(formattedDate);
     }
   };
-
-  const [showPicker, setShowPicker] = useState(false);
 
   const showDatepicker = () => {
     setShowPicker(true);
@@ -63,18 +63,26 @@ export default function DatePicker({
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {showPicker && Platform.OS === 'web' && (
-        <input
-          type="date"
-          value={value}
-          onChange={(e) => onValueChange(e.target.value)}
-          style={{ display: 'none' }}
-          ref={(input) => {
-            if (input) {
-              input.click();
-              input.onblur = () => setShowPicker(false);
-            }
-          }}
-        />
+        <View style={styles.webDatePicker}>
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => {
+              onValueChange(e.target.value);
+              setShowPicker(false);
+            }}
+            style={{
+              width: '100%',
+              padding: 10,
+              borderRadius: 8,
+              border: `1px solid ${colors.border}`,
+              fontSize: 16,
+              backgroundColor: colors.inputBackground,
+            }}
+            autoFocus
+            onBlur={() => setShowPicker(false)}
+          />
+        </View>
       )}
 
       {showPicker && Platform.OS !== 'web' && (
@@ -88,13 +96,6 @@ export default function DatePicker({
     </View>
   );
 }
-
-// Mock component for DateTimePicker since we can't import it directly
-// In a real app, you would use @react-native-community/datetimepicker
-const DateTimePicker = ({ value, mode, display, onChange }: any) => {
-  // This is just a placeholder
-  return null;
-};
 
 const styles = StyleSheet.create({
   container: {
@@ -131,5 +132,8 @@ const styles = StyleSheet.create({
     color: colors.error,
     fontSize: 12,
     marginTop: 4,
+  },
+  webDatePicker: {
+    marginTop: 8,
   },
 });

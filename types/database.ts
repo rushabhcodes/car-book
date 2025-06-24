@@ -59,8 +59,6 @@ export interface Database {
           insurance_validity: string
           insurance_type: string
           asking_price: string
-          offered_price: string
-          you_can_offer: string
           whatsapp_number: string
           created_at: string
           updated_at: string
@@ -82,8 +80,6 @@ export interface Database {
           insurance_validity: string
           insurance_type: string
           asking_price: string
-          offered_price: string
-          you_can_offer: string
           whatsapp_number: string
           created_at?: string
           updated_at?: string
@@ -105,8 +101,6 @@ export interface Database {
           insurance_validity?: string
           insurance_type?: string
           asking_price?: string
-          offered_price?: string
-          you_can_offer?: string
           whatsapp_number?: string
           created_at?: string
           updated_at?: string
