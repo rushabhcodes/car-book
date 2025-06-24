@@ -3,7 +3,7 @@ import { useCarListingStore } from '@/store/carListingStore';
 import { useDealerStore } from '@/store/dealerStore';
 import { CarListing } from '@/types/car';
 import { AlertCircle, Car, Check, X } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -17,16 +17,29 @@ import {
 } from 'react-native';
 
 export default function AllListingsScreen() {
-  const { listings, updateListing, deleteListing } = useCarListingStore();
+  const { fetchAllListings, updateListing, deleteListing } = useCarListingStore();
   const { dealers } = useDealerStore();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedListing, setSelectedListing] = useState<CarListing | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-  
+  const [allListings, setAllListings] = useState<CarListing[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchAndSetListings = async () => {
+    setRefreshing(true);
+    const listings = await fetchAllListings();
+    setAllListings(listings);
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    fetchAndSetListings();
+  }, []);
+
   // Filter listings based on status
-  const filteredListings = filterStatus === 'all' 
-    ? listings 
-    : listings.filter(listing => listing.status === filterStatus);
+  const filteredListings = filterStatus === 'all'
+    ? allListings
+    : allListings.filter(listing => listing.status === filterStatus);
 
   const getDealerName = (dealerId: string) => {
     const dealer = dealers.find(d => d.id === dealerId);
@@ -39,7 +52,7 @@ export default function AllListingsScreen() {
   };
 
   const handleApprove = (id: string) => {
-    const listing = listings.find(l => l.id === id);
+    const listing = allListings.find((l: CarListing) => l.id === id);
     if (!listing) return;
     
     const updatedListing: CarListing = { 
@@ -52,7 +65,7 @@ export default function AllListingsScreen() {
   };
 
   const handleReject = (id: string) => {
-    const listing = listings.find(l => l.id === id);
+    const listing = allListings.find((l: CarListing) => l.id === id);
     if (!listing) return;
     
     const updatedListing: CarListing = { 
@@ -225,6 +238,8 @@ export default function AllListingsScreen() {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        refreshing={refreshing}
+        onRefresh={fetchAndSetListings}
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
             <AlertCircle size={48} color={colors.textSecondary} />
