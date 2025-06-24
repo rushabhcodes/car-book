@@ -1,31 +1,31 @@
-import React, { useRef } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
-  TouchableOpacity, 
-  Alert,
-  Platform,
-  KeyboardAvoidingView
-} from 'react-native';
-import { useCarListingStore } from '@/store/carListingStore';
-import { useAuthStore } from '@/store/authStore';
-import { useDealerStore } from '@/store/dealerStore';
-import FormSection from '@/components/FormSection';
+import DatePicker from '@/components/DatePicker';
 import FormInput from '@/components/FormInput';
 import FormPicker from '@/components/FormPicker';
-import DatePicker from '@/components/DatePicker';
+import FormSection from '@/components/FormSection';
 import MediaUploader from '@/components/MediaUploader';
+import { useAuthStore } from '@/store/authStore';
+import { useCarListingStore } from '@/store/carListingStore';
+import { useDealerStore } from '@/store/dealerStore';
+import React, { useRef } from 'react';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 // import VideoUploader from '@/components/VideoUploader';
-import { 
-  brands, 
-  transmissionTypes, 
-  rtoNumbers, 
-  colors as carColors, 
-  ownershipOptions, 
-  fuelTypes, 
-  insuranceTypes 
+import {
+  brands,
+  colors as carColors,
+  fuelTypes,
+  insuranceTypes,
+  ownershipOptions,
+  rtoNumbers,
+  transmissionTypes
 } from '@/constants/carData';
 import colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
@@ -310,10 +310,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    boxShadow: '0px 1px 2px rgba(0,0,0,0.05)',
     elevation: 2,
   },
   listingLimitText: {
@@ -346,10 +343,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 16,
     marginTop: 24,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    boxShadow: '0px 4px 8px rgba(16,185,129,0.2)',
     elevation: 4,
   },
   submitButtonDisabled: {

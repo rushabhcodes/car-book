@@ -7,16 +7,16 @@ import * as Haptics from 'expo-haptics';
 import { Car, Edit, Trash2, X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    Image,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  FlatList,
+  Image,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 export default function ListingsScreen() {
@@ -440,10 +440,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    boxShadow: '0px 1px 2px rgba(0,0,0,0.05)',
     elevation: 2,
   },
   imageContainer: {
@@ -614,10 +611,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginHorizontal: 16,
     maxHeight: '90%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0,0,0,0.25)',
     elevation: 5,
   },
   modalHeader: {

@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import colors from '@/constants/colors';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
 interface FormSectionProps {
   title: string;
@@ -32,10 +32,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    boxShadow: '0px 1px 2px rgba(0,0,0,0.05)',
     elevation: 2,
   },
 });

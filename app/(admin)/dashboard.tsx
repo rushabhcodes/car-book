@@ -1,11 +1,11 @@
-import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Car, Users, CreditCard, TrendingUp, AlertCircle, UserPlus } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useAuthStore } from '@/store/authStore';
-import { useDealerStore } from '@/store/dealerStore';
 import { useCarListingStore } from '@/store/carListingStore';
+import { useDealerStore } from '@/store/dealerStore';
+import { useRouter } from 'expo-router';
+import { AlertCircle, Car, CreditCard, TrendingUp, UserPlus, Users } from 'lucide-react-native';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function AdminDashboardScreen() {
   const router = useRouter();
@@ -223,10 +223,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    boxShadow: '0px 1px 2px rgba(0,0,0,0.05)',
     elevation: 2,
   },
   iconContainer: {
@@ -252,10 +249,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    boxShadow: '0px 1px 2px rgba(0,0,0,0.05)',
     elevation: 2,
   },
   sectionTitle: {
