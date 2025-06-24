@@ -69,6 +69,15 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.bannerContainer}>
+        <Image
+          source={{
+            uri: "https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=2070&auto=format&fit=crop",
+          }}
+          style={styles.bannerImage}
+          resizeMode="cover"
+        />
+      </View>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -78,18 +87,8 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.logoContainer}>
-            <Image
-              source={{
-                uri: "https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=2070&auto=format&fit=crop",
-              }}
-              style={styles.logo}
-              resizeMode="cover"
-            />
-          </View>
           <View style={styles.formContainer}>
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to continue to CarBook</Text>
+            <Text style={styles.title}>Sign in to CarBook</Text>
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <TextInput
@@ -100,6 +99,7 @@ export default function LoginScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
             <View style={styles.inputContainer}>
@@ -112,6 +112,7 @@ export default function LoginScreen() {
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
+                  placeholderTextColor={colors.textSecondary}
                 />
                 <TouchableOpacity
                   style={styles.eyeIcon}
@@ -138,14 +139,19 @@ export default function LoginScreen() {
               ]}
               onPress={handleLogin}
               disabled={isLoading}
+              activeOpacity={0.85}
             >
               <Text style={styles.loginButtonText}>
                 {isLoading ? "Signing In..." : "Sign In"}
               </Text>
             </TouchableOpacity>
             <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
+              <Text style={styles.registerText}>Don't have an account?</Text>
+              <TouchableOpacity
+                style={styles.registerButton}
+                onPress={() => router.push("/(auth)/register")}
+                activeOpacity={0.85}
+              >
                 <Text style={styles.registerLink}>Register</Text>
               </TouchableOpacity>
             </View>
@@ -159,11 +165,23 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#f7f7f7',
+  },
+  bannerContainer: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#e5e5e5',
+    marginBottom: 0,
+  },
+  bannerImage: {
+    width: '100%',
+    height: '100%',
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
     alignItems: "center",
     justifyContent: "center",
   },
@@ -172,96 +190,86 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minHeight: "100%",
-  },
-  logoContainer: {
-    width: "100%",
-    maxWidth: 420,
-    height: 220,
-    overflow: "hidden",
-    alignSelf: "center",
-  },
-  logo: {
-    width: "100%",
-    height: "100%",
+    paddingVertical: 24,
   },
   formContainer: {
     width: "100%",
-    maxWidth: 420,
-    flex: 1,
-    padding: 24,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    backgroundColor: colors.card,
-    marginTop: 24,
-    boxShadow: "0 2px 16px rgba(0,0,0,0.08)",
+    maxWidth: 400,
+    padding: 32,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
     alignSelf: "center",
+    alignItems: 'stretch',
+    marginTop: -60,
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "700",
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 24,
     textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 32,
-    textAlign: "center",
+    letterSpacing: 0.2,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 15,
+    fontWeight: "600",
     color: colors.text,
     marginBottom: 8,
   },
   input: {
     backgroundColor: colors.inputBackground,
-    borderRadius: 12,
-    paddingHorizontal: 16,
+    borderRadius: 8,
+    paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
     color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
+    marginBottom: 2,
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.inputBackground,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
+    marginBottom: 2,
   },
   passwordInput: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
     color: colors.text,
   },
   eyeIcon: {
-    padding: 12,
+    padding: 10,
   },
   forgotPassword: {
     alignSelf: "flex-end",
     marginBottom: 24,
+    marginTop: 2,
   },
   forgotPasswordText: {
     color: colors.primary,
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
+    textDecorationLine: 'underline',
+    opacity: 0.85,
   },
   loginButton: {
     backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 8,
+    paddingVertical: 14,
     alignItems: "center",
-    boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
     marginTop: 8,
+    marginBottom: 8,
   },
   loginButtonDisabled: {
     opacity: 0.7,
@@ -269,20 +277,34 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: "#FFF",
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 0.2,
   },
   registerContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 24,
+    alignItems: 'center',
+    marginTop: 18,
   },
   registerText: {
     color: colors.textSecondary,
     fontSize: 14,
+    fontWeight: '500',
+    marginRight: 8,
+  },
+  registerButton: {
+    backgroundColor: '#f7f7f7',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginLeft: 4,
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
   registerLink: {
     color: colors.primary,
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "700",
+    letterSpacing: 0.2,
   },
 });
