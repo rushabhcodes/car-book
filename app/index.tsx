@@ -5,17 +5,17 @@ import { Eye, EyeOff } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   Alert,
+  Dimensions,
   Image,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  SafeAreaView,
-  Dimensions,
 } from "react-native";
 
 const { width } = Dimensions.get("window");
@@ -192,16 +192,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     backgroundColor: colors.card,
-    ...Platform.select({
-      web: {
-        marginTop: 24,
-        boxShadow: "0 2px 16px rgba(0,0,0,0.08)",
-      },
-      default: {
-        marginTop: -20,
-        elevation: 2,
-      },
-    }),
+    marginTop: 24,
+    boxShadow: "0 2px 16px rgba(0,0,0,0.08)",
     alignSelf: "center",
   },
   title: {
@@ -268,11 +260,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
     marginTop: 8,
   },
   loginButtonDisabled: {
