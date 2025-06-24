@@ -1,8 +1,8 @@
-import colors from '@/constants/colors';
-import { useAuthStore } from '@/store/authStore';
-import { useRouter } from 'expo-router';
-import { Eye, EyeOff } from 'lucide-react-native';
-import React, { useState } from 'react';
+import colors from "@/constants/colors";
+import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "expo-router";
+import { Eye, EyeOff } from "lucide-react-native";
+import React, { useState } from "react";
 import {
   Alert,
   Image,
@@ -13,192 +13,216 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
-} from 'react-native';
+  View,
+  SafeAreaView,
+  Dimensions,
+} from "react-native";
+
+const { width } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login, isAuthenticated } = useAuthStore();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // If already authenticated, redirect to appropriate dashboard
   React.useEffect(() => {
     if (isAuthenticated) {
       const userRole = useAuthStore.getState().user?.role;
-      if (userRole === 'admin') {
-        router.replace('/(admin)/dashboard');
+      if (userRole === "admin") {
+        router.replace("/(admin)/dashboard");
       } else {
-        router.replace('/(tabs)');
+        router.replace("/(tabs)");
       }
     }
   }, [isAuthenticated, router]);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
+      Alert.alert("Error", "Please enter both email and password");
       return;
     }
-
     setIsLoading(true);
-
     try {
       const success = await login(email, password);
-
       if (success) {
         const userRole = useAuthStore.getState().user?.role;
-        if (userRole === 'admin') {
-          router.replace('/(admin)/dashboard');
+        if (userRole === "admin") {
+          router.replace("/(admin)/dashboard");
         } else {
-          router.replace('/(tabs)');
+          router.replace("/(tabs)");
         }
       } else {
-        Alert.alert('Login Failed', 'Invalid email or password');
+        Alert.alert("Login Failed", "Invalid email or password");
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred during login');
+      Alert.alert("Error", "An error occurred during login");
       console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={50}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={50}
       >
-        <View style={styles.logoContainer}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=2070&auto=format&fit=crop' }}
-            style={styles.logo}
-            resizeMode="cover"
-          />
-        </View>
-
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue to CarBook</Text>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.logoContainer}>
+            <Image
+              source={{
+                uri: "https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=2070&auto=format&fit=crop",
+              }}
+              style={styles.logo}
+              resizeMode="cover"
             />
           </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
+          <View style={styles.formContainer}>
+            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={styles.subtitle}>Sign in to continue to CarBook</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
               <TextInput
-                style={styles.passwordInput}
-                placeholder="Enter your password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
+                style={styles.input}
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
                 autoCapitalize="none"
+                autoComplete="email"
               />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={togglePasswordVisibility}
-              >
-                {showPassword ? (
-                  <EyeOff size={20} color={colors.textSecondary} />
-                ) : (
-                  <Eye size={20} color={colors.textSecondary} />
-                )}
+            </View>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={togglePasswordVisibility}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color={colors.textSecondary} />
+                  ) : (
+                    <Eye size={20} color={colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.forgotPassword}
+              onPress={() => router.push("/(auth)/forgot-password")}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.loginButton,
+                isLoading && styles.loginButtonDisabled,
+              ]}
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              <Text style={styles.loginButtonText}>
+                {isLoading ? "Signing In..." : "Sign In"}
+              </Text>
+            </TouchableOpacity>
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
+                <Text style={styles.registerLink}>Register</Text>
               </TouchableOpacity>
             </View>
           </View>
-
-          <TouchableOpacity
-            style={styles.forgotPassword}
-            onPress={() => router.push('/(auth)/forgot-password')}
-          >
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-            onPress={handleLogin}
-            disabled={isLoading}
-          >
-            <Text style={styles.loginButtonText}>
-              {isLoading ? 'Signing In...' : 'Sign In'}
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-              <Text style={styles.registerLink}>Register</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: colors.background,
   },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   scrollContent: {
     flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "100%",
   },
   logoContainer: {
-    width: '100%',
+    width: "100%",
+    maxWidth: 420,
     height: 220,
-    overflow: 'hidden',
+    overflow: "hidden",
+    alignSelf: "center",
   },
   logo: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   formContainer: {
+    width: "100%",
+    maxWidth: 420,
     flex: 1,
     padding: 24,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     backgroundColor: colors.card,
-    marginTop: -20,
+    ...Platform.select({
+      web: {
+        marginTop: 24,
+        boxShadow: "0 2px 16px rgba(0,0,0,0.08)",
+      },
+      default: {
+        marginTop: -20,
+        elevation: 2,
+      },
+    }),
+    alignSelf: "center",
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.text,
     marginBottom: 8,
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
     color: colors.textSecondary,
     marginBottom: 32,
+    textAlign: "center",
   },
   inputContainer: {
     marginBottom: 20,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     color: colors.text,
     marginBottom: 8,
   },
@@ -213,8 +237,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.inputBackground,
     borderRadius: 12,
     borderWidth: 1,
@@ -231,33 +255,37 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   forgotPassword: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginBottom: 24,
   },
   forgotPasswordText: {
     color: colors.primary,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   loginButton: {
     backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 16,
-    alignItems: 'center',
-    boxShadow: '0px 4px 8px rgba(16,185,129,0.2)',
+    alignItems: "center",
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
     elevation: 4,
+    marginTop: 8,
   },
   loginButtonDisabled: {
     opacity: 0.7,
   },
   loginButtonText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 24,
   },
   registerText: {
@@ -267,6 +295,6 @@ const styles = StyleSheet.create({
   registerLink: {
     color: colors.primary,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });
