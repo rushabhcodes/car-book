@@ -421,6 +421,7 @@ export const useCarListingStore = create<CarListingState>()(
         try {
           // Prepare data for Supabase update
           const updateData = {
+            status: updatedListing.status,
             registration_year: updatedListing.registrationYear,
             manufacturing_year: updatedListing.manufacturingYear,
             brand: updatedListing.brand,
