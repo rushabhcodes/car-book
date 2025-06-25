@@ -1,50 +1,111 @@
-# Welcome to your Expo app 👋
+# CarBook B2B Car Dealer App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+CarBook is a B2B platform designed for car dealers to manage vehicle listings, subscriptions, and dealer accounts efficiently. Built with Expo, React Native, Zustand, and Supabase, it provides a seamless experience for both admins and dealers.
 
-## Get started
+---
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+- **Dealer Registration & Approval**: Dealers can register and are approved by admins before accessing the platform.
+- **Admin Dashboard**: View stats, manage dealers, approve users, and monitor subscriptions.
+- **Car Listings**: Dealers can list vehicles, upload images, and manage their inventory.
+- **Subscription Management**: Flexible plans for dealers, with listing limits and plan upgrades.
+- **Real-time Updates**: Live notifications for pending approvals and listing status.
+- **Secure Storage**: Car images, videos, and audio stored securely with Supabase Storage.
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## Screenshots
 
-In the output, you'll find options to open the app in a
+### Admin Dashboard
+![Admin Dashboard](assets/ui/admin_dashboard.jpg)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Admin - Manage Dealers
+![Manage Dealers](assets/ui/admin_manage_dealers.jpg)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Admin - Pending Users
+![Pending Users](assets/ui/admin_pending_users.jpg)
 
-## Get a fresh project
+### Admin - Manage Subscriptions
+![Manage Subscriptions](assets/ui/admin_manage_subscription.jpg)
 
-When you're ready, run:
+### Admin - Listings
+![Admin Listings](assets/ui/admin_listing.jpg)
 
+### Admin - Edit Subscription
+![Edit Subscription](assets/ui/admin_edit_subscription.jpg)
+
+### Dealer - All Listings
+![User All Listings](assets/ui/user_all_listing.jpg)
+
+### Dealer - List Vehicle
+![List Vehicle](assets/ui/user_list_vechile.jpg)
+
+### Dealer - Profile
+![User Profile](assets/ui/user_profile.jpg)
+
+### Dealer - My Listings
+![User Listings](assets/ui/user_useer_listing.jpg)
+
+---
+
+## Getting Started
+
+### 1. Clone the Repository
 ```bash
-npm run reset-project
+git clone https://github.com/your-org/car-book.git
+cd car-book
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-## Learn more
+### 3. Configure Supabase
+- Create a project on [Supabase](https://supabase.com/)
+- Copy your Project URL and anon key
+- Update `.env`:
+  ```env
+  EXPO_PUBLIC_SUPABASE_URL=your-supabase-url
+  EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+  ```
+- Run the SQL scripts in `supabase/schema.sql` and `supabase/storage.sql` via Supabase SQL Editor
 
-To learn more about developing your project with Expo, look at the following resources:
+### 4. Start the App
+```bash
+npm start
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## Folder Structure
 
-Join our community of developers creating universal apps.
+- `app/` — Main app screens and navigation
+- `components/` — Reusable UI components
+- `store/` — Zustand stores for state management
+- `lib/` — Supabase client setup
+- `constants/` — App-wide constants
+- `assets/` — Fonts and images
+- `supabase/` — Database and storage SQL
+- `types/` — TypeScript types
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## Security & Real-time Features
+- Row Level Security (RLS) on all tables
+- Admins can approve/reject dealers
+- Real-time notifications for pending users and listings
+- Secure file storage for car media
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## Credits
+
+- Built with [Expo](https://expo.dev/), [React Native](https://reactnative.dev/), [Supabase](https://supabase.com/), and [Zustand](https://docs.pmnd.rs/zustand/getting-started/introduction).
