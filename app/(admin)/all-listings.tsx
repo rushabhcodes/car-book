@@ -17,18 +17,16 @@ import {
 } from 'react-native';
 
 export default function AllListingsScreen() {
-  const { fetchAllListings, updateListing, deleteListing } = useCarListingStore();
+  const {listings, fetchListings, updateListing, deleteListing } = useCarListingStore();
   const { dealers } = useDealerStore();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedListing, setSelectedListing] = useState<CarListing | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-  const [allListings, setAllListings] = useState<CarListing[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchAndSetListings = async () => {
     setRefreshing(true);
-    const listings = await fetchAllListings();
-    setAllListings(listings);
+    await fetchListings();
     setRefreshing(false);
   };
 
@@ -38,8 +36,8 @@ export default function AllListingsScreen() {
 
   // Filter listings based on status
   const filteredListings = filterStatus === 'all'
-    ? allListings
-    : allListings.filter(listing => listing.status === filterStatus);
+    ? listings
+    : listings.filter(listing => listing.status === filterStatus);
 
   const getDealerName = (dealerId: string) => {
     const dealer = dealers.find(d => d.id === dealerId);
@@ -52,7 +50,7 @@ export default function AllListingsScreen() {
   };
 
   const handleApprove = (id: string) => {
-    const listing = allListings.find((l: CarListing) => l.id === id);
+    const listing = listings.find((l: CarListing) => l.id === id);
     if (!listing) return;
     
     const updatedListing: CarListing = { 
@@ -65,7 +63,7 @@ export default function AllListingsScreen() {
   };
 
   const handleReject = (id: string) => {
-    const listing = allListings.find((l: CarListing) => l.id === id);
+    const listing = listings.find((l: CarListing) => l.id === id);
     if (!listing) return;
     
     const updatedListing: CarListing = { 

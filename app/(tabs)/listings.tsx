@@ -23,8 +23,7 @@ import {
 export default function ListingsScreen() {
   const { user } = useAuthStore();
   const { dealers } = useDealerStore();
-  const { listings, deleteListing, fetchAllApprovedListings, fetchListings } =
-    useCarListingStore();
+  const { listings, deleteListing, fetchListings } = useCarListingStore();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedListing, setSelectedListing] = useState<CarListing | null>(
     null
@@ -36,8 +35,7 @@ export default function ListingsScreen() {
   useEffect(() => {
     const loadListings = async () => {
       if (showAllListings) {
-        const approvedData = await fetchAllApprovedListings();
-        setApprovedListings(approvedData);
+        await fetchListings();
       } else {
         // Fetch user's own listings when switching to "My Listings"
         if (user?.id) {
@@ -45,7 +43,7 @@ export default function ListingsScreen() {
         }
       }
     };
-    
+
     loadListings();
   }, [showAllListings]);
 
@@ -53,12 +51,11 @@ export default function ListingsScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
+
     setRefreshing(true);
     try {
       if (showAllListings) {
-        const approvedData = await fetchAllApprovedListings();
-        setApprovedListings(approvedData);
+        const approvedData = await fetchListings();
       } else {
         // Refresh user's own listings
         if (user?.id) {
@@ -74,7 +71,7 @@ export default function ListingsScreen() {
 
   // Filter listings based on the toggle
   const filteredListings = showAllListings
-    ? approvedListings
+    ? listings.filter((listing) => listing.status === "approved")
     : listings.filter((listing) => listing.dealerId === user?.id);
 
   const getDealerName = (dealerId: string) => {

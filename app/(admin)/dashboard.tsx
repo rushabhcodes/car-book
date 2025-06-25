@@ -8,22 +8,22 @@ import { useDealerStore } from '@/store/dealerStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { useRouter } from 'expo-router';
 import { AlertCircle, Car, CreditCard, TrendingUp, UserPlus, Users } from 'lucide-react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function AdminDashboardScreen() {
   const router = useRouter();
   const { user, logout, pendingUsers, getPendingUsersCount } = useAuthStore();
   const { dealers } = useDealerStore();
-  const { listings } = useCarListingStore();
+  const { getTotalListingCount, getPendingListingCount } = useCarListingStore();
   const { subscriptions } = useSubscriptionStore();
-  
+
   const stats = {
     totalDealers: dealers.length,
     activeDealers: dealers.filter(dealer => dealer.status === 'active').length,
     pendingDealers: getPendingUsersCount(),
-    totalListings: listings.length,
-    pendingApprovals: listings.filter(listing => listing.status === 'pending').length,
+    totalListings: getTotalListingCount(),
+    pendingApprovals: getPendingListingCount(),
     activeSubscriptions: subscriptions.filter(subscription => subscription.status === 'active').length,
     revenue: subscriptions.reduce((total, subscription) => {
       if (subscription.status === 'active') {

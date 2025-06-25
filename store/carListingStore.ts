@@ -18,13 +18,13 @@ interface CarListingState {
   updateListing: (id: string, updatedListing: CarListing) => Promise<boolean>;
   deleteListing: (id: string) => Promise<boolean>;
   fetchListings: (dealerId?: string) => Promise<void>;
-  fetchAllListings: () => Promise<CarListing[]>;
-  fetchAllApprovedListings: () => Promise<CarListing[]>;
   uploadImages: (images: string[]) => Promise<string[]>;
   uploadImageAsBase64: (imageUri: string) => Promise<string | null>;
   resetForm: () => void;
+  getTotalListingCount: () => number;
+  getPendingListingCount: () => number;
 }
-
+ 
 const initialForm: CarListing = {
   id: '',
   dealerId: '',
@@ -47,15 +47,12 @@ const initialForm: CarListing = {
   whatsappNumber: '',
 };
 
-// Sample listings for demo purposes (will be replaced by Supabase data)
-const sampleListings: CarListing[] = [];
-
 export const useCarListingStore = create<CarListingState>()(
   persist(
     (set, get) => ({
       form: { ...initialForm },
       errors: {},
-      listings: sampleListings,
+      listings: [],
       isLoading: false,
       isSubmitting: false,
 
@@ -419,106 +416,7 @@ export const useCarListingStore = create<CarListingState>()(
           set({ isLoading: false });
         }
       },
-
-      fetchAllListings: async () => {
-        try {
-          const { data, error } = await supabase
-            .from('car_listings')
-            .select(`
-              *,
-              listing_media (
-                file_url,
-                file_type,
-                file_name
-              )
-            `)
-            .order('created_at', { ascending: false });
-
-          if (error) {
-            console.error('Error fetching all listings:', error);
-            throw error;
-          }
-          // Transform data to match CarListing interface
-          const transformedListings: CarListing[] = (data || []).map(listing => ({
-            id: listing.id,
-            dealerId: listing.dealer_id,
-            status: listing.status,
-            registrationYear: listing.registration_year,
-            manufacturingYear: listing.manufacturing_year,
-            brand: listing.brand,
-            model: listing.model,
-            transmissionType: listing.transmission_type,
-            rtoNumber: listing.rto_number,
-            color: listing.color,
-            ownershipHistory: listing.ownership_history,
-            kilometersDriven: listing.kilometers_driven,
-            fuelType: listing.fuel_type,
-            insuranceValidity: listing.insurance_validity,
-            insuranceType: listing.insurance_type,
-            askingPrice: listing.asking_price,
-            whatsappNumber: listing.whatsapp_number,
-            images: listing.listing_media
-              ?.filter((media: any) => media.file_type === 'image')
-              ?.map((media: any) => media.file_url) || []
-          }));
-          console.log('Transformed:', transformedListings);
-          return transformedListings;
-        } catch (error) {
-          console.error('Error fetching all listings:', error);
-          return [];
-        }
-      },
-
-      fetchAllApprovedListings: async () => {
-        try {
-          const { data, error } = await supabase
-            .from('car_listings')
-            .select(`
-              *,
-              listing_media (
-                file_url,
-                file_type,
-                file_name
-              )
-            `)
-            .eq('status', 'approved')
-            .order('created_at', { ascending: false });
-
-          if (error) {
-            console.error('Error fetching approved listings:', error);
-            return [];
-          }
-
-          const transformedListings: CarListing[] = (data || []).map(listing => ({
-            id: listing.id,
-            dealerId: listing.dealer_id,
-            status: listing.status,
-            registrationYear: listing.registration_year,
-            manufacturingYear: listing.manufacturing_year,
-            brand: listing.brand,
-            model: listing.model,
-            transmissionType: listing.transmission_type,
-            rtoNumber: listing.rto_number,
-            color: listing.color,
-            ownershipHistory: listing.ownership_history,
-            kilometersDriven: listing.kilometers_driven,
-            fuelType: listing.fuel_type,
-            insuranceValidity: listing.insurance_validity,
-            insuranceType: listing.insurance_type,
-            askingPrice: listing.asking_price,
-            whatsappNumber: listing.whatsapp_number,
-            images: listing.listing_media
-              ?.filter((media: any) => media.file_type === 'image')
-              ?.map((media: any) => media.file_url) || []
-          }));
-
-          return transformedListings;
-        } catch (error) {
-          console.error('Error fetching approved listings:', error);
-          return [];
-        }
-      },
-
+      
       updateListing: async (id, updatedListing) => {
         try {
           // Prepare data for Supabase update
@@ -589,6 +487,17 @@ export const useCarListingStore = create<CarListingState>()(
 
       resetForm: () => {
         set({ form: { ...initialForm }, errors: {} });
+      },
+
+      getTotalListingCount: () => {
+        const { listings } = get();
+        return listings.length;
+      },
+
+      getPendingListingCount: () => {
+        
+        const { listings } = get();
+        return listings.filter(listing => listing.status === 'pending').length;
       },
     }),
     {

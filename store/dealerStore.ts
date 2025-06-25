@@ -10,7 +10,7 @@ interface DealerState {
   updateDealer: (id: string, updatedDealer: Dealer) => void;
   deleteDealer: (id: string) => void;
   fetchDealers: () => Promise<void>;
-}
+} 
 
 export const useDealerStore = create<DealerState>()(
   persist(
