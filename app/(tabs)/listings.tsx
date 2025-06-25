@@ -12,6 +12,7 @@ import {
   Image,
   Modal,
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -22,7 +23,7 @@ import {
 export default function ListingsScreen() {
   const { user } = useAuthStore();
   const { dealers } = useDealerStore();
-  const { listings, deleteListing, fetchAllApprovedListings } =
+  const { listings, deleteListing, fetchAllApprovedListings, fetchListings } =
     useCarListingStore();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedListing, setSelectedListing] = useState<CarListing | null>(
@@ -30,12 +31,46 @@ export default function ListingsScreen() {
   );
   const [showAllListings, setShowAllListings] = useState(true);
   const [approvedListings, setApprovedListings] = useState<CarListing[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    if (showAllListings) {
-      fetchAllApprovedListings().then(setApprovedListings);
-    }
+    const loadListings = async () => {
+      if (showAllListings) {
+        const approvedData = await fetchAllApprovedListings();
+        setApprovedListings(approvedData);
+      } else {
+        // Fetch user's own listings when switching to "My Listings"
+        if (user?.id) {
+          await fetchListings(user.id);
+        }
+      }
+    };
+    
+    loadListings();
   }, [showAllListings]);
+
+  const onRefresh = async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    
+    setRefreshing(true);
+    try {
+      if (showAllListings) {
+        const approvedData = await fetchAllApprovedListings();
+        setApprovedListings(approvedData);
+      } else {
+        // Refresh user's own listings
+        if (user?.id) {
+          await fetchListings(user.id);
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing listings:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Filter listings based on the toggle
   const filteredListings = showAllListings
@@ -265,6 +300,14 @@ export default function ListingsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={EmptyListComponent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
       />
 
       {selectedListing && (
