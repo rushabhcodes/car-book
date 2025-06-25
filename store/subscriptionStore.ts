@@ -9,7 +9,7 @@ interface SubscriptionState {
   currentUserSubscription: Subscription | null;
   isLoading: boolean;
   isUpdating: boolean;
-  
+
   // Subscription management actions
   fetchSubscriptions: () => Promise<void>;
   fetchUserSubscription: (userId: string) => Promise<void>;
@@ -19,7 +19,7 @@ interface SubscriptionState {
   deactivateSubscription: (id: string) => Promise<boolean>;
   extendSubscription: (id: string, days: number) => Promise<boolean>;
   changePlan: (id: string, newPlan: 'basic' | 'premium' | 'enterprise') => Promise<boolean>;
-  
+
   // Utility functions
   isSubscriptionActive: (subscription: Subscription) => boolean;
   isSubscriptionExpired: (subscription: Subscription) => boolean;
@@ -40,17 +40,11 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       fetchSubscriptions: async () => {
         try {
           set({ isLoading: true });
-          
+
           const { data, error } = await supabase
             .from('subscriptions')
             .select(`
-              *,
-              users:user_id (
-                id,
-                name,
-                email,
-                phone
-              )
+              *
             `)
             .order('created_at', { ascending: false });
 
@@ -70,7 +64,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       fetchUserSubscription: async (userId: string) => {
         try {
           set({ isLoading: true });
-          
+
           const { data, error } = await supabase
             .from('subscriptions')
             .select('*')
@@ -93,7 +87,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       createSubscription: async (subscription) => {
         try {
           set({ isUpdating: true });
-          
+
           const { data, error } = await supabase
             .from('subscriptions')
             .insert([subscription])
@@ -108,7 +102,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           // Update the subscriptions list
           const { subscriptions } = get();
           set({ subscriptions: [data, ...subscriptions] });
-          
+
           return true;
         } catch (error) {
           console.error('Error creating subscription:', error);
@@ -121,7 +115,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       updateSubscription: async (id, updates) => {
         try {
           set({ isUpdating: true });
-          
+
           const { data, error } = await supabase
             .from('subscriptions')
             .update(updates)
@@ -136,15 +130,15 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
           // Update the subscriptions list
           const { subscriptions, currentUserSubscription } = get();
-          const updatedSubscriptions = subscriptions.map(sub => 
+          const updatedSubscriptions = subscriptions.map(sub =>
             sub.id === id ? data : sub
           );
-          
-          set({ 
+
+          set({
             subscriptions: updatedSubscriptions,
             currentUserSubscription: currentUserSubscription?.id === id ? data : currentUserSubscription
           });
-          
+
           return true;
         } catch (error) {
           console.error('Error updating subscription:', error);
@@ -166,7 +160,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         try {
           const { subscriptions } = get();
           const subscription = subscriptions.find(sub => sub.id === id);
-          
+
           if (!subscription) {
             console.error('Subscription not found');
             return false;
@@ -174,9 +168,9 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
           const currentEndDate = new Date(subscription.end_date);
           const newEndDate = new Date(currentEndDate.getTime() + (days * 24 * 60 * 60 * 1000));
-          
-          return get().updateSubscription(id, { 
-            end_date: newEndDate.toISOString().split('T')[0] 
+
+          return get().updateSubscription(id, {
+            end_date: newEndDate.toISOString().split('T')[0]
           });
         } catch (error) {
           console.error('Error extending subscription:', error);
@@ -192,7 +186,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           enterprise: 100
         };
 
-        return get().updateSubscription(id, { 
+        return get().updateSubscription(id, {
           plan: newPlan,
           listing_limit: planLimits[newPlan]
         });
@@ -200,17 +194,17 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
       isSubscriptionActive: (subscription) => {
         if (subscription.status !== 'active') return false;
-        
+
         const today = new Date();
         const endDate = new Date(subscription.end_date);
-        
+
         return endDate >= today;
       },
 
       isSubscriptionExpired: (subscription) => {
         const today = new Date();
         const endDate = new Date(subscription.end_date);
-        
+
         return endDate < today;
       },
 
@@ -219,7 +213,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         const endDate = new Date(subscription.end_date);
         const diffTime = endDate.getTime() - today.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         return Math.max(0, diffDays);
       },
 

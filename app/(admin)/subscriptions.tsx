@@ -1,5 +1,6 @@
 import colors from '@/constants/colors';
 import { useDealerStore } from '@/store/dealerStore';
+import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { Dealer, Subscription } from '@/types/dealer';
 import { AlertCircle, Check, Edit, X } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
@@ -15,9 +16,18 @@ import {
 } from 'react-native';
 
 export default function SubscriptionsScreen() {
-  const { dealers, updateDealer, fetchDealers } = useDealerStore();
+  const { dealers, fetchDealers } = useDealerStore();
+  const { 
+    subscriptions, 
+    fetchSubscriptions, 
+    updateSubscription, 
+    createSubscription,
+    isLoading 
+  } = useSubscriptionStore();
+
   useEffect(() => {
     fetchDealers();
+    fetchSubscriptions();
   }, []);
 
   if (!dealers || dealers.length === 0) {
@@ -33,46 +43,79 @@ export default function SubscriptionsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
   const [subscriptionForm, setSubscriptionForm] = useState<Subscription>({
+    id: '',
+    user_id: '',
     plan: 'basic',
     status: 'active',
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    amount: 999,
-    listingLimit: 10
+    start_date: new Date().toISOString().split('T')[0],
+    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    listing_limit: 15,
+    created_at: '',
+    updated_at: ''
   });
+
+  // Helper function to get subscription for a dealer
+  const getDealerSubscription = (dealerId: string): Subscription | null => {
+    return subscriptions.find(sub => sub.user_id === dealerId) || null;
+  };
+
+  // Helper function to get plan pricing
+  const getPlanAmount = (plan: 'basic' | 'premium' | 'enterprise'): number => {
+    const planAmounts = { basic: 999, premium: 1999, enterprise: 4999 };
+    return planAmounts[plan];
+  };
 
   const handleEditSubscription = (dealer: Dealer) => {
     setSelectedDealer(dealer);
-    if (dealer.subscription) {
-      setSubscriptionForm(dealer.subscription);
+    const dealerSubscription = getDealerSubscription(dealer.id);
+    
+    if (dealerSubscription) {
+      setSubscriptionForm(dealerSubscription);
     } else {
       setSubscriptionForm({
+        id: '',
+        user_id: dealer.id,
         plan: 'basic',
         status: 'active',
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        amount: 999,
-        listingLimit: 10
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        listing_limit: 15,
+        created_at: '',
+        updated_at: ''
       });
     }
     setModalVisible(true);
   };
 
-  const handleUpdateSubscription = () => {
+  const handleUpdateSubscription = async () => {
     if (!selectedDealer) return;
 
-    const updatedDealer = {
-      ...selectedDealer,
-      subscription: subscriptionForm
+    const subscriptionData = {
+      ...subscriptionForm,
+      user_id: selectedDealer.id
     };
 
-    updateDealer(selectedDealer.id, updatedDealer);
-    setModalVisible(false);
-    Alert.alert("Success", "Subscription has been updated");
+    let success = false;
+    if (subscriptionForm.id) {
+      // Update existing subscription
+      success = await updateSubscription(subscriptionForm.id, subscriptionData);
+    } else {
+      // Create new subscription
+      success = await createSubscription(subscriptionData);
+    }
+
+    if (success) {
+      setModalVisible(false);
+      Alert.alert("Success", "Subscription has been updated");
+      // Refresh data
+      fetchSubscriptions();
+    } else {
+      Alert.alert("Error", "Failed to update subscription");
+    }
   };
 
   const renderItem = ({ item }: { item: Dealer }) => {
-    const subscription = item.subscription;
+    const subscription = getDealerSubscription(item.id);
     
     return (
       <View style={styles.card}>
@@ -120,12 +163,12 @@ export default function SubscriptionsScreen() {
               <View style={styles.subscriptionRow}>
                 <View style={styles.subscriptionItem}>
                   <Text style={styles.itemLabel}>Amount</Text>
-                  <Text style={styles.itemValue}>₹{subscription.amount.toLocaleString('en-IN')}</Text>
+                  <Text style={styles.itemValue}>₹{getPlanAmount(subscription.plan).toLocaleString('en-IN')}</Text>
                 </View>
                 
                 <View style={styles.subscriptionItem}>
                   <Text style={styles.itemLabel}>Listing Limit</Text>
-                  <Text style={styles.itemValue}>{subscription.listingLimit}</Text>
+                  <Text style={styles.itemValue}>{subscription.listing_limit}</Text>
                 </View>
               </View>
               
@@ -133,7 +176,7 @@ export default function SubscriptionsScreen() {
                 <View style={styles.subscriptionItem}>
                   <Text style={styles.itemLabel}>Start Date</Text>
                   <Text style={styles.itemValue}>
-                    {new Date(subscription.startDate).toLocaleDateString('en-IN', {
+                    {new Date(subscription.start_date).toLocaleDateString('en-IN', {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric'
@@ -144,7 +187,7 @@ export default function SubscriptionsScreen() {
                 <View style={styles.subscriptionItem}>
                   <Text style={styles.itemLabel}>End Date</Text>
                   <Text style={styles.itemValue}>
-                    {new Date(subscription.endDate).toLocaleDateString('en-IN', {
+                    {new Date(subscription.end_date).toLocaleDateString('en-IN', {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric'
@@ -227,7 +270,7 @@ export default function SubscriptionsScreen() {
                     onPress={() => setSubscriptionForm({
                       ...subscriptionForm,
                       plan: 'basic',
-                      amount: 999
+                      listing_limit: 15
                     })}
                   >
                     <View style={[
@@ -246,7 +289,7 @@ export default function SubscriptionsScreen() {
                     onPress={() => setSubscriptionForm({
                       ...subscriptionForm,
                       plan: 'premium',
-                      amount: 1999
+                      listing_limit: 50
                     })}
                   >
                     <View style={[
@@ -265,7 +308,7 @@ export default function SubscriptionsScreen() {
                     onPress={() => setSubscriptionForm({
                       ...subscriptionForm,
                       plan: 'enterprise',
-                      amount: 4999
+                      listing_limit: 100
                     })}
                   >
                     <View style={[
@@ -327,12 +370,12 @@ export default function SubscriptionsScreen() {
                 <Text style={styles.sectionTitle}>Listing Limit</Text>
                 <TextInput
                   style={styles.input}
-                  value={subscriptionForm.listingLimit.toString()}
+                  value={subscriptionForm.listing_limit.toString()}
                   onChangeText={(text) => {
-                    const listingLimit = parseInt(text) || 10;
+                    const listing_limit = parseInt(text) || 15;
                     setSubscriptionForm({
                       ...subscriptionForm,
-                      listingLimit
+                      listing_limit
                     });
                   }}
                   keyboardType="numeric"
@@ -347,7 +390,7 @@ export default function SubscriptionsScreen() {
                   <View style={styles.dateItem}>
                     <Text style={styles.dateLabel}>Start Date</Text>
                     <Text style={styles.dateValue}>
-                      {new Date(subscriptionForm.startDate).toLocaleDateString('en-IN', {
+                      {new Date(subscriptionForm.start_date).toLocaleDateString('en-IN', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric'
@@ -358,7 +401,7 @@ export default function SubscriptionsScreen() {
                   <View style={styles.dateItem}>
                     <Text style={styles.dateLabel}>End Date</Text>
                     <Text style={styles.dateValue}>
-                      {new Date(subscriptionForm.endDate).toLocaleDateString('en-IN', {
+                      {new Date(subscriptionForm.end_date).toLocaleDateString('en-IN', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric'
@@ -370,11 +413,11 @@ export default function SubscriptionsScreen() {
                 <TouchableOpacity 
                   style={styles.extendButton}
                   onPress={() => {
-                    const currentEndDate = new Date(subscriptionForm.endDate);
+                    const currentEndDate = new Date(subscriptionForm.end_date);
                     currentEndDate.setMonth(currentEndDate.getMonth() + 1);
                     setSubscriptionForm({
                       ...subscriptionForm,
-                      endDate: currentEndDate.toISOString()
+                      end_date: currentEndDate.toISOString().split('T')[0]
                     });
                   }}
                 >
