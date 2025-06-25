@@ -1,6 +1,6 @@
 import colors from '@/constants/colors';
 import { useAuthStore } from '@/store/authStore';
-import { useDealerStore } from '@/store/dealerStore';
+import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { useRouter } from 'expo-router';
 import { Bell, CreditCard, Edit, HelpCircle, LogOut, Shield } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
@@ -17,17 +17,32 @@ import {
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout, refreshUser } = useAuthStore();
-  const { dealers } = useDealerStore();
-  
-  const currentDealer = dealers.find(dealer => dealer.id === user?.id);
+  const { 
+    currentUserSubscription, 
+    fetchUserSubscription, 
+    isLoading,
+    isSubscriptionActive,
+    isSubscriptionExpired,
+    getRemainingDays 
+  } = useSubscriptionStore();
 
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshUser();
+    if (user?.id) {
+      await fetchUserSubscription(user.id);
+    }
     setRefreshing(false);
-  }, []);
+  }, [user?.id]);
+
+  // Fetch user subscription when component mounts or user changes
+  React.useEffect(() => {
+    if (user?.id) {
+      fetchUserSubscription(user.id);
+    }
+  }, [user?.id]);
   
   const handleLogout = () => {
     Alert.alert(
@@ -48,22 +63,32 @@ export default function ProfileScreen() {
   };
 
   const getSubscriptionDetails = () => {
-    if (!currentDealer?.subscription) {
+    if (!currentUserSubscription) {
       return {
         plan: 'No active subscription',
         status: 'inactive',
         validUntil: 'N/A',
+        isActive: false,
+        isExpired: false,
+        remainingDays: 0,
       };
     }
     
+    const isActive = isSubscriptionActive(currentUserSubscription);
+    const isExpired = isSubscriptionExpired(currentUserSubscription);
+    const remainingDays = getRemainingDays(currentUserSubscription);
+    
     return {
-      plan: currentDealer.subscription.plan.charAt(0).toUpperCase() + currentDealer.subscription.plan.slice(1),
-      status: currentDealer.subscription.status,
-      validUntil: new Date(currentDealer.subscription.endDate).toLocaleDateString('en-IN', {
+      plan: currentUserSubscription.plan.charAt(0).toUpperCase() + currentUserSubscription.plan.slice(1),
+      status: currentUserSubscription.status,
+      validUntil: new Date(currentUserSubscription.end_date).toLocaleDateString('en-IN', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
       }),
+      isActive,
+      isExpired,
+      remainingDays,
     };
   };
 
@@ -92,31 +117,64 @@ export default function ProfileScreen() {
           <CreditCard size={20} color={colors.primary} />
         </View>
         
-        <View style={styles.subscriptionDetails}>
-          <Text style={styles.planName}>{subscriptionDetails.plan}</Text>
-          
-          <View style={styles.subscriptionInfo}>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Status</Text>
-              <View style={[
-                styles.statusBadge,
-                subscriptionDetails.status === 'active' ? styles.activeBadge : styles.inactiveBadge
-              ]}>
-                <Text style={[
-                  styles.statusText,
-                  subscriptionDetails.status === 'active' ? styles.activeText : styles.inactiveText
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading subscription...</Text>
+          </View>
+        ) : (
+          <View style={styles.subscriptionDetails}>
+            <Text style={styles.planName}>{subscriptionDetails.plan}</Text>
+            
+            <View style={styles.subscriptionInfo}>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Status</Text>
+                <View style={[
+                  styles.statusBadge,
+                  subscriptionDetails.isActive ? styles.activeBadge : styles.inactiveBadge
                 ]}>
-                  {subscriptionDetails.status === 'active' ? 'Active' : 'Inactive'}
+                  <Text style={[
+                    styles.statusText,
+                    subscriptionDetails.isActive ? styles.activeText : styles.inactiveText
+                  ]}>
+                    {subscriptionDetails.isActive ? 'Active' : 
+                     subscriptionDetails.isExpired ? 'Expired' : 'Inactive'}
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Valid Until</Text>
+                <Text style={[
+                  styles.infoValue,
+                  subscriptionDetails.isExpired && styles.expiredText
+                ]}>
+                  {subscriptionDetails.validUntil}
                 </Text>
               </View>
-            </View>
-            
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Valid Until</Text>
-              <Text style={styles.infoValue}>{subscriptionDetails.validUntil}</Text>
+
+              {currentUserSubscription && (
+                <>
+                  <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Listing Limit</Text>
+                    <Text style={styles.infoValue}>{currentUserSubscription.listing_limit}</Text>
+                  </View>
+                  
+                  {subscriptionDetails.isActive && (
+                    <View style={styles.infoItem}>
+                      <Text style={styles.infoLabel}>Days Remaining</Text>
+                      <Text style={[
+                        styles.infoValue,
+                        subscriptionDetails.remainingDays <= 7 && styles.warningText
+                      ]}>
+                        {subscriptionDetails.remainingDays} days
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
             </View>
           </View>
-        </View>
+        )}
         
         <TouchableOpacity style={styles.upgradeButton}>
           <Text style={styles.upgradeButtonText}>Manage Subscription</Text>
@@ -261,10 +319,12 @@ const styles = StyleSheet.create({
   },
   subscriptionInfo: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   infoItem: {
-    flex: 1,
+    minWidth: '48%',
+    marginBottom: 8,
   },
   infoLabel: {
     fontSize: 12,
@@ -297,6 +357,20 @@ const styles = StyleSheet.create({
   },
   inactiveText: {
     color: colors.error,
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  expiredText: {
+    color: colors.error,
+  },
+  warningText: {
+    color: '#f59e0b',
   },
   upgradeButton: {
     backgroundColor: colors.primary,

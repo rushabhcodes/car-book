@@ -1,10 +1,13 @@
 export interface Subscription {
+  id: string;
+  user_id: string;
   plan: 'basic' | 'premium' | 'enterprise';
-  status: 'active' | 'inactive';
-  startDate: string;
-  endDate: string;
-  amount: number;
-  listingLimit: number;
+  status: 'active' | 'inactive' | 'expired' | 'cancelled';
+  listing_limit: number;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Dealer {

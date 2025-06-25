@@ -10,6 +10,26 @@ CREATE TABLE public.users (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE public.subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID UNIQUE REFERENCES public.users(id) ON DELETE CASCADE,
+  
+  -- Subscription Plan Details
+  plan TEXT CHECK (plan IN ('basic', 'premium', 'enterprise')) NOT NULL,
+  status TEXT CHECK (status IN ('active', 'inactive', 'expired', 'cancelled')) NOT NULL DEFAULT 'inactive',
+  
+  -- Listing Limit for the Subscription Tier
+  listing_limit INTEGER NOT NULL DEFAULT 0,
+
+  -- Validity Dates
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create car_listings table
 CREATE TABLE public.car_listings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -92,6 +112,21 @@ CREATE POLICY "Admins can view all listings" ON public.car_listings
 CREATE POLICY "Public can view approved listings" ON public.car_listings
   FOR SELECT USING (status = 'approved');
 
+ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own subscription
+CREATE POLICY "Users can view their own subscription" ON public.subscriptions
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Admins can view and manage all subscriptions
+CREATE POLICY "Admins can manage all subscriptions" ON public.subscriptions
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.users 
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
 -- RLS Policies for listing_media table
 CREATE POLICY "Users can view media for accessible listings" ON public.listing_media
   FOR SELECT USING (
@@ -130,6 +165,13 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'role', 'dealer'),
     'pending'
   );
+
+  -- Create default subscription (basic, inactive, 5 listing limit)
+  INSERT INTO public.subscriptions (user_id, plan, status, listing_limit, start_date, end_date)
+  VALUES (
+    NEW.id, 'basic', 'inactive', 15, CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days'
+  );
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
