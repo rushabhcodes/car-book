@@ -34,7 +34,7 @@ export default function LoginScreen() {
       if (userRole === "admin") {
         router.replace("/(admin)/dashboard");
       } else {
-        router.replace("/(tabs)");
+        router.replace("/(tabs)/listings");
       }
     }
   }, [isAuthenticated, router]);
@@ -52,7 +52,7 @@ export default function LoginScreen() {
         if (userRole === "admin") {
           router.replace("/(admin)/dashboard");
         } else {
-          router.replace("/(tabs)");
+          router.replace("/(tabs)/listings");
         }
       } else {
         Alert.alert("Login Failed", "Invalid email or password");

@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react';
-import { Tabs } from 'expo-router';
-import { useRouter } from 'expo-router';
-import { Users, Car, CreditCard, LayoutDashboard, UserPlus } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useAuthStore } from '@/store/authStore';
+import { Tabs, useRouter } from 'expo-router';
+import { Car, CreditCard, LayoutDashboard, UserPlus, Users } from 'lucide-react-native';
+import React, { useEffect } from 'react';
 
 export default function AdminLayout() {
   const router = useRouter();
@@ -18,7 +17,7 @@ export default function AdminLayout() {
     }
     
     if (user?.role !== 'admin') {
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/listings');
     }
   }, [isAuthenticated, user, router]);
 

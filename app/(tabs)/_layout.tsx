@@ -25,6 +25,7 @@ export default function TabLayout() {
   return (
     <Tabs
       key={userStatus}
+      initialRouteName="listings"
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         headerShown: true,
@@ -51,9 +52,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="index"
+        name="listings"
         options={{
-          title: "Listing",
+          title: "Listings",
           tabBarIcon: ({ color }) => <Car size={24} color={color} />,
           tabBarLabel: "Listings",
         }}
