@@ -1,55 +1,51 @@
 # CarBook B2B Car Dealer App
 
-CarBook is a B2B platform designed for car dealers to manage vehicle listings, subscriptions, and dealer accounts efficiently. Built with Expo, React Native, Zustand, and Supabase, it provides a seamless experience for both admins and dealers.
+CarBook is a modern B2B platform for car dealers and administrators to manage vehicle listings, subscriptions, and dealer accounts with ease. Built using Expo, React Native, Zustand, and Supabase, it delivers a seamless and secure experience for both admins and dealers.
 
 ---
 
-## Features
+## 🚀 Overview
 
-- **Dealer Registration & Approval**: Dealers can register and are approved by admins before accessing the platform.
-- **Admin Dashboard**: View stats, manage dealers, approve users, and monitor subscriptions.
+CarBook streamlines the workflow for car dealerships, providing robust tools for inventory management, dealer onboarding, and subscription control. With real-time updates and secure media storage, it empowers both admins and dealers to focus on what matters most—growing their business.
+
+---
+
+## ✨ Features
+
+- **Dealer Registration & Approval**: Dealers register and await admin approval before accessing the platform.
+- **Admin Dashboard**: View platform stats, manage dealers, approve users, and monitor subscriptions.
 - **Car Listings**: Dealers can list vehicles, upload images, and manage their inventory.
 - **Subscription Management**: Flexible plans for dealers, with listing limits and plan upgrades.
 - **Real-time Updates**: Live notifications for pending approvals and listing status.
 - **Secure Storage**: Car images, videos, and audio stored securely with Supabase Storage.
+- **Role-based Access**: Separate experiences for Admins and Dealers.
+- **Modern UI**: Clean, intuitive interface for both web and mobile.
 
 ---
 
-## Screenshots
+## 📸 Screenshots
 
-### Admin Dashboard
-![Admin Dashboard](assets/ui/admin_dashboard.jpg)
+### 👤 User (Dealer) Experience
+<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+  <img src="assets/ui/user_all_listing.jpg" alt="User All Listings" width="320"/>
+  <img src="assets/ui/user_list_vechile.jpg" alt="List Vehicle" width="320"/>
+  <img src="assets/ui/user_profile.jpg" alt="User Profile" width="320"/>
+  <img src="assets/ui/user_useer_listing.jpg" alt="User Listings" width="320"/>
+</div>
 
-### Admin - Manage Dealers
-![Manage Dealers](assets/ui/admin_manage_dealers.jpg)
-
-### Admin - Pending Users
-![Pending Users](assets/ui/admin_pending_users.jpg)
-
-### Admin - Manage Subscriptions
-![Manage Subscriptions](assets/ui/admin_manage_subscription.jpg)
-
-### Admin - Listings
-![Admin Listings](assets/ui/admin_listing.jpg)
-
-### Admin - Edit Subscription
-![Edit Subscription](assets/ui/admin_edit_subscription.jpg)
-
-### Dealer - All Listings
-![User All Listings](assets/ui/user_all_listing.jpg)
-
-### Dealer - List Vehicle
-![List Vehicle](assets/ui/user_list_vechile.jpg)
-
-### Dealer - Profile
-![User Profile](assets/ui/user_profile.jpg)
-
-### Dealer - My Listings
-![User Listings](assets/ui/user_useer_listing.jpg)
+### 🛡️ Admin Experience
+<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+  <img src="assets/ui/admin_dashboard.jpg" alt="Admin Dashboard" width="320"/>
+  <img src="assets/ui/admin_manage_dealers.jpg" alt="Manage Dealers" width="320"/>
+  <img src="assets/ui/admin_pending_users.jpg" alt="Pending Users" width="320"/>
+  <img src="assets/ui/admin_manage_subscription.jpg" alt="Manage Subscriptions" width="320"/>
+  <img src="assets/ui/admin_listing.jpg" alt="Admin Listings" width="320"/>
+  <img src="assets/ui/admin_edit_subscription.jpg" alt="Edit Subscription" width="320"/>
+</div>
 
 ---
 
-## Getting Started
+## 🛠️ Getting Started
 
 ### 1. Clone the Repository
 ```bash
@@ -79,7 +75,7 @@ npm start
 
 ---
 
-## Folder Structure
+## 📂 Folder Structure
 
 - `app/` — Main app screens and navigation
 - `components/` — Reusable UI components
@@ -92,7 +88,7 @@ npm start
 
 ---
 
-## Security & Real-time Features
+## 🔒 Security & Real-time Features
 - Row Level Security (RLS) on all tables
 - Admins can approve/reject dealers
 - Real-time notifications for pending users and listings
@@ -100,12 +96,12 @@ npm start
 
 ---
 
-## License
+## 📄 License
 
 MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-## Credits
+## 🙏 Credits
 
 - Built with [Expo](https://expo.dev/), [React Native](https://reactnative.dev/), [Supabase](https://supabase.com/), and [Zustand](https://docs.pmnd.rs/zustand/getting-started/introduction).
