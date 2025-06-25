@@ -5,6 +5,7 @@ import colors from '@/constants/colors';
 import { useAuthStore } from '@/store/authStore';
 import { useCarListingStore } from '@/store/carListingStore';
 import { useDealerStore } from '@/store/dealerStore';
+import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { useRouter } from 'expo-router';
 import { AlertCircle, Car, CreditCard, TrendingUp, UserPlus, Users } from 'lucide-react-native';
 import React from 'react';
@@ -15,6 +16,7 @@ export default function AdminDashboardScreen() {
   const { user, logout, pendingUsers, getPendingUsersCount } = useAuthStore();
   const { dealers } = useDealerStore();
   const { listings } = useCarListingStore();
+  const { subscriptions } = useSubscriptionStore();
   
   const stats = {
     totalDealers: dealers.length,
@@ -22,11 +24,11 @@ export default function AdminDashboardScreen() {
     pendingDealers: getPendingUsersCount(),
     totalListings: listings.length,
     pendingApprovals: listings.filter(listing => listing.status === 'pending').length,
-    activeSubscriptions: dealers.filter(dealer => dealer.subscription?.status === 'active').length,
-    revenue: dealers.reduce((total, dealer) => {
-      if (dealer.subscription?.status === 'active') {
+    activeSubscriptions: subscriptions.filter(subscription => subscription.status === 'active').length,
+    revenue: subscriptions.reduce((total, subscription) => {
+      if (subscription.status === 'active') {
         const planAmounts = { basic: 999, premium: 1999, enterprise: 4999 };
-        return total + (planAmounts[dealer.subscription.plan] || 0);
+        return total + (planAmounts[subscription.plan] || 0);
       }
       return total;
     }, 0),

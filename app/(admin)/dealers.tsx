@@ -1,6 +1,7 @@
 import colors from '@/constants/colors';
 import { useDealerStore } from '@/store/dealerStore';
-import { Dealer, Subscription } from '@/types/dealer';
+import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { Dealer } from '@/types/dealer';
 import { AlertCircle, Check, Edit, Plus, Trash2, X } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
@@ -17,8 +18,11 @@ import {
 
 export default function DealersScreen() {
   const { dealers, addDealer, updateDealer, deleteDealer, fetchDealers } = useDealerStore();
+  const { subscriptions, fetchSubscriptions } = useSubscriptionStore();
+  
   useEffect(() => {
     fetchDealers();
+    fetchSubscriptions();
   }, []);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -32,16 +36,19 @@ export default function DealersScreen() {
     role: 'dealer',
     status: 'active',
     companyName: '',
-    address: '',
-    subscription: {
-      plan: 'basic',
-      status: 'active',
-      startDate: new Date().toISOString(),
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      amount: 999,
-      listingLimit: 10
-    }
+    address: ''
   });
+
+  // Helper function to get subscription for a dealer
+  const getDealerSubscription = (dealerId: string) => {
+    return subscriptions.find(sub => sub.user_id === dealerId) || null;
+  };
+
+  // Helper function to get plan pricing
+  const getPlanAmount = (plan: 'basic' | 'premium' | 'enterprise'): number => {
+    const planAmounts = { basic: 999, premium: 1999, enterprise: 4999 };
+    return planAmounts[plan];
+  };
 
   const handleAddDealer = () => {
     setIsEditing(false);
@@ -52,15 +59,7 @@ export default function DealersScreen() {
       role: 'dealer',
       status: 'active',
       companyName: '',
-      address: '',
-      subscription: {
-        plan: 'basic',
-        status: 'active',
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        amount: 999,
-        listingLimit: 10
-      }
+      address: ''
     });
     setModalVisible(true);
   };
@@ -69,15 +68,7 @@ export default function DealersScreen() {
     setIsEditing(true);
     setCurrentDealer(dealer);
     setFormData({
-      ...dealer,
-      subscription: dealer.subscription || {
-        plan: 'basic',
-        status: 'active',
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        amount: 999,
-        listingLimit: 10
-      }
+      ...dealer
     });
     setModalVisible(true);
   };
@@ -171,40 +162,47 @@ export default function DealersScreen() {
           
           <View style={styles.subscriptionContainer}>
             <Text style={styles.subscriptionTitle}>Subscription</Text>
-            <View style={styles.subscriptionDetails}>
-              <View style={styles.subscriptionItem}>
-                <Text style={styles.subscriptionLabel}>Plan:</Text>
-                <Text style={styles.subscriptionValue}>
-                  {item.subscription?.plan ? item.subscription.plan.charAt(0).toUpperCase() + item.subscription.plan.slice(1) : 'None'}
-                </Text>
-              </View>
-              <View style={styles.subscriptionItem}>
-                <Text style={styles.subscriptionLabel}>Status:</Text>
-                <View style={[
-                  styles.miniStatusBadge, 
-                  item.subscription?.status === 'active' ? styles.activeBadge : styles.inactiveBadge
-                ]}>
-                  <Text style={[
-                    styles.miniStatusText,
-                    item.subscription?.status === 'active' ? styles.activeText : styles.inactiveText
-                  ]}>
-                    {item.subscription?.status === 'active' ? 'Active' : 'Inactive'}
-                  </Text>
+            {(() => {
+              const subscription = getDealerSubscription(item.id);
+              return subscription ? (
+                <View style={styles.subscriptionDetails}>
+                  <View style={styles.subscriptionItem}>
+                    <Text style={styles.subscriptionLabel}>Plan:</Text>
+                    <Text style={styles.subscriptionValue}>
+                      {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
+                    </Text>
+                  </View>
+                  <View style={styles.subscriptionItem}>
+                    <Text style={styles.subscriptionLabel}>Status:</Text>
+                    <View style={[
+                      styles.miniStatusBadge, 
+                      subscription.status === 'active' ? styles.activeBadge : styles.inactiveBadge
+                    ]}>
+                      <Text style={[
+                        styles.miniStatusText,
+                        subscription.status === 'active' ? styles.activeText : styles.inactiveText
+                      ]}>
+                        {subscription.status === 'active' ? 'Active' : 'Inactive'}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.subscriptionItem}>
+                    <Text style={styles.subscriptionLabel}>Amount:</Text>
+                    <Text style={styles.subscriptionValue}>
+                      ₹{getPlanAmount(subscription.plan).toLocaleString('en-IN')}
+                    </Text>
+                  </View>
+                  <View style={styles.subscriptionItem}>
+                    <Text style={styles.subscriptionLabel}>Listing Limit:</Text>
+                    <Text style={styles.subscriptionValue}>
+                      {subscription.listing_limit}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.subscriptionItem}>
-                <Text style={styles.subscriptionLabel}>Amount:</Text>
-                <Text style={styles.subscriptionValue}>
-                  ₹{item.subscription?.amount?.toLocaleString('en-IN') || '0'}
-                </Text>
-              </View>
-              <View style={styles.subscriptionItem}>
-                <Text style={styles.subscriptionLabel}>Listing Limit:</Text>
-                <Text style={styles.subscriptionValue}>
-                  {item.subscription?.listingLimit || 10}
-                </Text>
-              </View>
-            </View>
+              ) : (
+                <Text style={styles.subscriptionValue}>No subscription</Text>
+              );
+            })()}
           </View>
         </View>
         
@@ -367,146 +365,6 @@ export default function DealersScreen() {
                     <Text style={styles.radioLabel}>Inactive</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-              
-              <Text style={styles.sectionTitle}>Subscription Details</Text>
-              
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Plan</Text>
-                <View style={styles.radioContainer}>
-                  <TouchableOpacity 
-                    style={styles.radioOption}
-                    onPress={() => setFormData({
-                      ...formData, 
-                      subscription: {
-                        ...formData.subscription as Subscription,
-                        plan: 'basic',
-                        amount: 999
-                      }
-                    })}
-                  >
-                    <View style={[
-                      styles.radioButton,
-                      formData.subscription?.plan === 'basic' && styles.radioButtonSelected
-                    ]}>
-                      {formData.subscription?.plan === 'basic' && (
-                        <View style={styles.radioButtonInner} />
-                      )}
-                    </View>
-                    <Text style={styles.radioLabel}>Basic (₹999/month)</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.radioOption}
-                    onPress={() => setFormData({
-                      ...formData, 
-                      subscription: {
-                        ...formData.subscription as Subscription,
-                        plan: 'premium',
-                        amount: 1999
-                      }
-                    })}
-                  >
-                    <View style={[
-                      styles.radioButton,
-                      formData.subscription?.plan === 'premium' && styles.radioButtonSelected
-                    ]}>
-                      {formData.subscription?.plan === 'premium' && (
-                        <View style={styles.radioButtonInner} />
-                      )}
-                    </View>
-                    <Text style={styles.radioLabel}>Premium (₹1,999/month)</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.radioOption}
-                    onPress={() => setFormData({
-                      ...formData, 
-                      subscription: {
-                        ...formData.subscription as Subscription,
-                        plan: 'enterprise',
-                        amount: 4999
-                      }
-                    })}
-                  >
-                    <View style={[
-                      styles.radioButton,
-                      formData.subscription?.plan === 'enterprise' && styles.radioButtonSelected
-                    ]}>
-                      {formData.subscription?.plan === 'enterprise' && (
-                        <View style={styles.radioButtonInner} />
-                      )}
-                    </View>
-                    <Text style={styles.radioLabel}>Enterprise (₹4,999/month)</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-              
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Subscription Status</Text>
-                <View style={styles.radioContainer}>
-                  <TouchableOpacity 
-                    style={styles.radioOption}
-                    onPress={() => setFormData({
-                      ...formData, 
-                      subscription: {
-                        ...formData.subscription as Subscription,
-                        status: 'active'
-                      }
-                    })}
-                  >
-                    <View style={[
-                      styles.radioButton,
-                      formData.subscription?.status === 'active' && styles.radioButtonSelected
-                    ]}>
-                      {formData.subscription?.status === 'active' && (
-                        <View style={styles.radioButtonInner} />
-                      )}
-                    </View>
-                    <Text style={styles.radioLabel}>Active</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.radioOption}
-                    onPress={() => setFormData({
-                      ...formData, 
-                      subscription: {
-                        ...formData.subscription as Subscription,
-                        status: 'inactive'
-                      }
-                    })}
-                  >
-                    <View style={[
-                      styles.radioButton,
-                      formData.subscription?.status === 'inactive' && styles.radioButtonSelected
-                    ]}>
-                      {formData.subscription?.status === 'inactive' && (
-                        <View style={styles.radioButtonInner} />
-                      )}
-                    </View>
-                    <Text style={styles.radioLabel}>Inactive</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Listing Limit</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.subscription?.listingLimit?.toString() || "10"}
-                  onChangeText={(text) => {
-                    const listingLimit = parseInt(text) || 10;
-                    setFormData({
-                      ...formData,
-                      subscription: {
-                        ...formData.subscription as Subscription,
-                        listingLimit
-                      }
-                    });
-                  }}
-                  placeholder="Enter listing limit"
-                  keyboardType="numeric"
-                />
               </View>
             </ScrollView>
             

@@ -19,5 +19,4 @@ export interface Dealer {
   status: 'active' | 'inactive' | 'pending';
   companyName?: string;
   address?: string;
-  subscription?: Subscription;
 }
