@@ -3,9 +3,20 @@ import FormInput from '@/components/FormInput';
 import FormPicker from '@/components/FormPicker';
 import FormSection from '@/components/FormSection';
 import MediaUploader from '@/components/MediaUploader';
+import {
+  brands,
+  colors as carColors,
+  fuelTypes,
+  insuranceTypes,
+  ownershipOptions,
+  rtoNumbers,
+  transmissionTypes
+} from '@/constants/carData';
+import colors from '@/constants/colors';
 import { useAuthStore } from '@/store/authStore';
 import { useCarListingStore } from '@/store/carListingStore';
 import { useDealerStore } from '@/store/dealerStore';
+import * as Haptics from 'expo-haptics';
 import React, { useRef } from 'react';
 import {
   Alert,
@@ -17,18 +28,6 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-// import VideoUploader from '@/components/VideoUploader';
-import {
-  brands,
-  colors as carColors,
-  fuelTypes,
-  insuranceTypes,
-  ownershipOptions,
-  rtoNumbers,
-  transmissionTypes
-} from '@/constants/carData';
-import colors from '@/constants/colors';
-import * as Haptics from 'expo-haptics';
 
 export default function ListCarScreen() {
   const scrollViewRef = useRef<ScrollView>(null);

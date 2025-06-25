@@ -1,31 +1,65 @@
-# Welcome to your Expo app 👋
+# Car Book - Used Car Marketplace App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile application built with React Native and Expo for buying and selling used cars. The app connects dealers with potential buyers and provides a platform for listing vehicles with detailed information, including photos, videos, and audio descriptions.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **User Authentication**: Secure sign-up/sign-in for dealers and admins
+- **Dealer Listings Management**: Add, update, and manage vehicle listings
+- **Media Upload**: Support for images, videos, and audio recordings
+- **Admin Dashboard**: Approve dealer registrations and monitor listings
+- **Subscription Plans**: Different tiers with listing limits for dealers
 
+## Tech Stack
+
+- **Frontend**: React Native, Expo
+- **State Management**: Zustand
+- **Backend & Database**: Supabase (Authentication, PostgreSQL, Storage)
+- **Navigation**: Expo Router (file-based routing)
+- **UI Components**: Custom components with theming support
+
+## Project Structure
+
+```
+car-book/
+├── app/                    # Expo Router screens and navigation
+│   ├── (admin)/            # Admin-specific screens
+│   ├── (auth)/             # Authentication screens
+│   └── (tabs)/             # Main tab navigation screens
+├── assets/                 # Static assets (images, fonts)
+├── components/             # Reusable components
+│   ├── auth/               # Authentication-related components
+│   ├── layout/             # Layout components
+│   ├── listings/           # Listing-related components
+│   └── ui/                 # Generic UI components
+├── constants/              # App constants and configuration
+├── hooks/                  # Custom React hooks
+├── lib/                    # Utility functions and services
+│   ├── services/           # API service modules
+│   └── supabase.ts         # Supabase client configuration
+├── store/                  # Zustand state stores
+├── supabase/               # Supabase schema and migration files
+└── types/                  # TypeScript type definitions
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 16+
+- npm or yarn
+- Expo CLI
+- Supabase account
+
+### Installation
+
+1. Clone the repository
    ```bash
-   npm install
+   git clone https://github.com/yourusername/car-book.git
+   cd car-book
    ```
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
+2. Install dependencies
 
 When you're ready, run:
 

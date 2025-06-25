@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { dealerService } from '@/lib/services';
 import { Dealer } from '@/types/dealer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
@@ -20,58 +20,45 @@ export const useDealerStore = create<DealerState>()(
 
       // Fetch all dealers from Supabase
       fetchDealers: async () => {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('role', 'dealer');
-        if (error) {
+        try {
+          const data = await dealerService.getAllDealers();
+          set({ dealers: data });
+        } catch (error) {
           console.error('Error fetching dealers:', error);
           set({ dealers: [] });
-        } else {
-          set({ dealers: data });
         }
       },
 
       addDealer: async (dealer) => {
-        const { data, error } = await supabase
-          .from('users')
-          .insert([dealer])
-          .select();
-        if (error) {
+        try {
+          const newDealer = await dealerService.createDealer(dealer);
+          set((state) => ({ dealers: [...state.dealers, newDealer] }));
+        } catch (error) {
           console.error('Error adding dealer:', error);
-        } else {
-          set((state) => ({ dealers: [...state.dealers, ...data] }));
         }
       },
 
       updateDealer: async (id, updatedDealer) => {
-        const { data, error } = await supabase
-          .from('users')
-          .update(updatedDealer)
-          .eq('id', id)
-          .select();
-        if (error) {
-          console.error('Error updating dealer:', error);
-        } else {
+        try {
+          await dealerService.updateDealer(id, updatedDealer);
           set((state) => ({
             dealers: state.dealers.map((dealer) =>
               dealer.id === id ? { ...updatedDealer } : dealer
             ),
           }));
+        } catch (error) {
+          console.error('Error updating dealer:', error);
         }
       },
 
       deleteDealer: async (id) => {
-        const { error } = await supabase
-          .from('users')
-          .delete()
-          .eq('id', id);
-        if (error) {
-          console.error('Error deleting dealer:', error);
-        } else {
+        try {
+          await dealerService.deleteDealer(id);
           set((state) => ({
             dealers: state.dealers.filter((dealer) => dealer.id !== id),
           }));
+        } catch (error) {
+          console.error('Error deleting dealer:', error);
         }
       },
 
