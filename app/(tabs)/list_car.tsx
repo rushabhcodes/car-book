@@ -29,11 +29,12 @@ import {
 } from '@/constants/carData';
 import colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
+import { useSubscriptionStore } from '@/store/subscriptionStore';
 
 export default function ListCarScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const { user } = useAuthStore();
-  const { getDealerListingLimit } = useDealerStore();
+  const { getCurrentUserListingLimit } = useSubscriptionStore();
   const { 
     form, 
     errors, 
@@ -47,7 +48,7 @@ export default function ListCarScreen() {
   } = useCarListingStore();
 
   // Get dealer's listing limit
-  const listingLimit = getDealerListingLimit(user?.id || '');
+  const listingLimit = getCurrentUserListingLimit();
   
   // Count dealer's current listings
   const dealerListingsCount = listings.filter(listing => listing.dealerId === user?.id).length;

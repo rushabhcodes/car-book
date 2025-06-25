@@ -9,7 +9,6 @@ interface DealerState {
   addDealer: (dealer: Dealer) => void;
   updateDealer: (id: string, updatedDealer: Dealer) => void;
   deleteDealer: (id: string) => void;
-  getDealerListingLimit: (dealerId: string) => number;
   fetchDealers: () => Promise<void>;
 }
 
@@ -73,12 +72,6 @@ export const useDealerStore = create<DealerState>()(
             dealers: state.dealers.filter((dealer) => dealer.id !== id),
           }));
         }
-      },
-
-      getDealerListingLimit: (dealerId) => {
-        const dealer = get().dealers.find(d => d.id === dealerId);
-        if (!dealer || !dealer.subscription) return 10; // Default limit
-        return dealer.subscription.listingLimit;
       }
     }),
     {

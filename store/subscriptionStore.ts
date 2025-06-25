@@ -26,6 +26,7 @@ interface SubscriptionState {
   getRemainingDays: (subscription: Subscription) => number;
   getRemainingListings: (userId: string) => Promise<number>;
   canCreateListing: (userId: string) => Promise<boolean>;
+  getCurrentUserListingLimit: () => number;
 }
 
 export const useSubscriptionStore = create<SubscriptionState>()(
@@ -263,6 +264,11 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       canCreateListing: async (userId) => {
         const remainingListings = await get().getRemainingListings(userId);
         return remainingListings > 0;
+      },
+
+      getCurrentUserListingLimit: () => {
+        const { currentUserSubscription } = get();
+        return currentUserSubscription?.listing_limit || 0;
       },
     }),
     {
