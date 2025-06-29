@@ -4,18 +4,20 @@ import { useCarListingStore } from "@/store/carListingStore";
 import { useDealerStore } from "@/store/dealerStore";
 import { CarListing } from "@/types/car";
 import * as Haptics from "expo-haptics";
-import { Car, Edit, Trash2, X } from "lucide-react-native";
+import { Car, Edit, Filter, MessageCircle, Trash2, X } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
   Image,
+  Linking,
   Modal,
   Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -25,12 +27,25 @@ export default function ListingsScreen() {
   const { dealers } = useDealerStore();
   const { listings, deleteListing, fetchListings } = useCarListingStore();
   const [modalVisible, setModalVisible] = useState(false);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedListing, setSelectedListing] = useState<CarListing | null>(
     null
   );
   const [showAllListings, setShowAllListings] = useState(true);
   const [approvedListings, setApprovedListings] = useState<CarListing[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Filter states
+  const [filters, setFilters] = useState({
+    rto: "",
+    color: "",
+    brand: "",
+    fuelType: "",
+    transmissionType: "",
+    minPrice: "",
+    maxPrice: "",
+  });
+  const [activeFiltersCount, setActiveFiltersCount] = useState(0);
 
   useEffect(() => {
     const loadListings = async () => {
@@ -69,10 +84,65 @@ export default function ListingsScreen() {
     }
   };
 
-  // Filter listings based on the toggle
-  const filteredListings = showAllListings
-    ? listings.filter((listing) => listing.status === "approved")
-    : listings.filter((listing) => listing.dealerId === user?.id);
+  // Filter listings based on the toggle and applied filters
+  const filteredListings = (() => {
+    let filtered = showAllListings
+      ? listings.filter((listing) => listing.status === "approved")
+      : listings.filter((listing) => listing.dealerId === user?.id);
+
+    // Apply filters
+    if (filters.rto) {
+      filtered = filtered.filter((listing) =>
+        listing.rtoNumber?.toLowerCase().includes(filters.rto.toLowerCase())
+      );
+    }
+
+    if (filters.color) {
+      filtered = filtered.filter((listing) =>
+        listing.color?.toLowerCase().includes(filters.color.toLowerCase())
+      );
+    }
+
+    if (filters.brand) {
+      filtered = filtered.filter((listing) =>
+        listing.brand?.toLowerCase().includes(filters.brand.toLowerCase())
+      );
+    }
+
+    if (filters.fuelType) {
+      filtered = filtered.filter((listing) =>
+        listing.fuelType?.toLowerCase() === filters.fuelType.toLowerCase()
+      );
+    }
+
+    if (filters.transmissionType) {
+      filtered = filtered.filter((listing) =>
+        listing.transmissionType?.toLowerCase() === filters.transmissionType.toLowerCase()
+      );
+    }
+
+    if (filters.minPrice) {
+      const minPrice = parseInt(filters.minPrice);
+      filtered = filtered.filter((listing) =>
+        parseInt(listing.askingPrice || "0") >= minPrice
+      );
+    }
+
+    if (filters.maxPrice) {
+      const maxPrice = parseInt(filters.maxPrice);
+      filtered = filtered.filter((listing) =>
+        parseInt(listing.askingPrice || "0") <= maxPrice
+      );
+    }
+
+    return filtered;
+  })();
+
+  // Update active filters count
+  useEffect(() => {
+    const count = Object.values(filters).filter(value => value !== "").length;
+    setActiveFiltersCount(count);
+  }, [filters]);
 
   const getDealerName = (dealerId: string) => {
     const dealer = dealers.find((d) => d.id === dealerId);
@@ -113,6 +183,53 @@ export default function ListingsScreen() {
         },
       ]
     );
+  };
+
+  const handleWhatsAppContact = (listing: CarListing) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    
+    const dealerName = getDealerName(listing.dealerId);
+    const carInfo = `${listing.brand} ${listing.model} (${listing.manufacturingYear})`;
+    const price = `₹${parseInt(listing.askingPrice || "0").toLocaleString("en-IN")}`;
+    
+    const message = `Hi ${dealerName}, I'm interested in your ${carInfo} listed for ${price}. Could you please share more details?`;
+    
+    const whatsappNumber = listing.whatsappNumber?.replace(/\D/g, ''); // Remove non-numeric characters
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    
+    Linking.openURL(whatsappUrl).catch((err) => {
+      console.error('Error opening WhatsApp:', err);
+      Alert.alert('Error', 'Could not open WhatsApp. Please make sure WhatsApp is installed.');
+    });
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      rto: "",
+      color: "",
+      brand: "",
+      fuelType: "",
+      transmissionType: "",
+      minPrice: "",
+      maxPrice: "",
+    });
+  };
+
+  const getUniqueValues = (key: keyof CarListing) => {
+    const values = listings
+      .map(listing => listing[key])
+      .filter((value, index, self) => value && self.indexOf(value) === index)
+      .sort();
+    return values as string[];
   };
 
   const formatDate = (dateString: string) => {
@@ -257,37 +374,51 @@ export default function ListingsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            showAllListings && styles.filterButtonActive,
-          ]}
-          onPress={() => setShowAllListings(true)}
-        >
-          <Text
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
             style={[
-              styles.filterButtonText,
-              showAllListings && styles.filterButtonTextActive,
+              styles.filterButton,
+              showAllListings && styles.filterButtonActive,
             ]}
+            onPress={() => setShowAllListings(true)}
           >
-            All Listings
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            !showAllListings && styles.filterButtonActive,
-          ]}
-          onPress={() => setShowAllListings(false)}
-        >
-          <Text
+            <Text
+              style={[
+                styles.filterButtonText,
+                showAllListings && styles.filterButtonTextActive,
+              ]}
+            >
+              All Listings
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[
-              styles.filterButtonText,
-              !showAllListings && styles.filterButtonTextActive,
+              styles.filterButton,
+              !showAllListings && styles.filterButtonActive,
             ]}
+            onPress={() => setShowAllListings(false)}
           >
-            My Listings
-          </Text>
+            <Text
+              style={[
+                styles.filterButtonText,
+                !showAllListings && styles.filterButtonTextActive,
+              ]}
+            >
+              My Listings
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        <TouchableOpacity
+          style={styles.filtersButton}
+          onPress={() => setFilterModalVisible(true)}
+        >
+          <Filter size={20} color={colors.primary} />
+          {activeFiltersCount > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -516,32 +647,184 @@ export default function ListingsScreen() {
                 </View>
               </ScrollView>
 
-              {selectedListing.dealerId === user?.id && (
-                <View style={styles.modalFooter}>
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.editModalButton]}
-                    onPress={() => {
-                      handleEdit(selectedListing);
-                      setModalVisible(false);
-                    }}
-                  >
-                    <Edit size={16} color="#FFF" />
-                    <Text style={styles.editModalButtonText}>Edit Listing</Text>
-                  </TouchableOpacity>
+              <View style={styles.modalFooter}>
+                {/* WhatsApp Contact Button - Always visible */}
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.whatsappButton]}
+                  onPress={() => handleWhatsAppContact(selectedListing)}
+                >
+                  <MessageCircle size={16} color="#FFF" />
+                  <Text style={styles.whatsappButtonText}>Contact on WhatsApp</Text>
+                </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.deleteModalButton]}
-                    onPress={() => handleDelete(selectedListing.id)}
-                  >
-                    <Trash2 size={16} color="#FFF" />
-                    <Text style={styles.deleteModalButtonText}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+                {/* Edit and Delete buttons - Only for listing owner */}
+                {selectedListing.dealerId === user?.id && (
+                  <>
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.editModalButton]}
+                      onPress={() => {
+                        handleEdit(selectedListing);
+                        setModalVisible(false);
+                      }}
+                    >
+                      <Edit size={16} color="#FFF" />
+                      <Text style={styles.editModalButtonText}>Edit</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.deleteModalButton]}
+                      onPress={() => handleDelete(selectedListing.id)}
+                    >
+                      <Trash2 size={16} color="#FFF" />
+                      <Text style={styles.deleteModalButtonText}>Delete</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
             </View>
           </View>
         </Modal>
       )}
+
+      {/* Filter Modal */}
+      <Modal
+        visible={filterModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.filterModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Filter Listings</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setFilterModalVisible(false)}
+              >
+                <X size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.filterModalBody}>
+              <View style={styles.filterSection}>
+                <Text style={styles.filterSectionTitle}>Location</Text>
+                <TextInput
+                  style={styles.filterInput}
+                  placeholder="Enter RTO (e.g., MH01, DL01)"
+                  value={filters.rto}
+                  onChangeText={(value) => handleFilterChange('rto', value)}
+                  placeholderTextColor={colors.textSecondary}
+                />
+              </View>
+
+              <View style={styles.filterSection}>
+                <Text style={styles.filterSectionTitle}>Vehicle Details</Text>
+                
+                <TextInput
+                  style={styles.filterInput}
+                  placeholder="Brand (e.g., Maruti, Honda)"
+                  value={filters.brand}
+                  onChangeText={(value) => handleFilterChange('brand', value)}
+                  placeholderTextColor={colors.textSecondary}
+                />
+
+                <TextInput
+                  style={styles.filterInput}
+                  placeholder="Color (e.g., White, Black)"
+                  value={filters.color}
+                  onChangeText={(value) => handleFilterChange('color', value)}
+                  placeholderTextColor={colors.textSecondary}
+                />
+
+                <View style={styles.pickerSection}>
+                  <Text style={styles.pickerLabel}>Fuel Type</Text>
+                  <View style={styles.pickerOptions}>
+                    {["", "Petrol", "Diesel", "CNG", "Electric"].map((option) => (
+                      <TouchableOpacity
+                        key={option}
+                        style={[
+                          styles.pickerOption,
+                          filters.fuelType === option && styles.pickerOptionActive
+                        ]}
+                        onPress={() => handleFilterChange('fuelType', option)}
+                      >
+                        <Text style={[
+                          styles.pickerOptionText,
+                          filters.fuelType === option && styles.pickerOptionTextActive
+                        ]}>
+                          {option || "Any"}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.pickerSection}>
+                  <Text style={styles.pickerLabel}>Transmission</Text>
+                  <View style={styles.pickerOptions}>
+                    {["", "Manual", "Automatic"].map((option) => (
+                      <TouchableOpacity
+                        key={option}
+                        style={[
+                          styles.pickerOption,
+                          filters.transmissionType === option && styles.pickerOptionActive
+                        ]}
+                        onPress={() => handleFilterChange('transmissionType', option)}
+                      >
+                        <Text style={[
+                          styles.pickerOptionText,
+                          filters.transmissionType === option && styles.pickerOptionTextActive
+                        ]}>
+                          {option || "Any"}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.filterSection}>
+                <Text style={styles.filterSectionTitle}>Price Range</Text>
+                <View style={styles.priceInputContainer}>
+                  <TextInput
+                    style={[styles.filterInput, styles.priceInput]}
+                    placeholder="Min Price"
+                    value={filters.minPrice}
+                    onChangeText={(value) => handleFilterChange('minPrice', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                  <Text style={styles.priceRangeSeparator}>to</Text>
+                  <TextInput
+                    style={[styles.filterInput, styles.priceInput]}
+                    placeholder="Max Price"
+                    value={filters.maxPrice}
+                    onChangeText={(value) => handleFilterChange('maxPrice', value)}
+                    keyboardType="numeric"
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.filterModalFooter}>
+              <TouchableOpacity
+                style={[styles.filterModalButton, styles.clearButton]}
+                onPress={clearFilters}
+              >
+                <Text style={styles.clearButtonText}>Clear All</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.filterModalButton, styles.applyButton]}
+                onPress={() => setFilterModalVisible(false)}
+              >
+                <Text style={styles.applyButtonText}>Apply Filters</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -553,10 +836,39 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 12,
     backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    flex: 1,
+  },
+  filtersButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.inputBackground,
+    marginLeft: 12,
+    position: "relative",
+  },
+  filterBadge: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    backgroundColor: colors.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  filterBadgeText: {
+    color: "#FFF",
+    fontSize: 12,
+    fontWeight: "600",
   },
   filterButton: {
     flex: 1,
@@ -853,6 +1165,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+    gap: 8,
   },
   modalButton: {
     flex: 1,
@@ -862,13 +1175,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexDirection: "row",
   },
+  whatsappButton: {
+    backgroundColor: "#25D366", // WhatsApp green color
+  },
+  whatsappButtonText: {
+    color: "#FFF",
+    fontWeight: "500",
+    marginLeft: 6,
+  },
   editModalButton: {
     backgroundColor: colors.primary,
-    marginRight: 8,
   },
   deleteModalButton: {
     backgroundColor: colors.error,
-    marginLeft: 8,
   },
   editModalButtonText: {
     color: "#FFF",
@@ -879,5 +1198,115 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontWeight: "500",
     marginLeft: 6,
+  },
+  // Filter Modal Styles
+  filterModalContent: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    maxHeight: "85%",
+    boxShadow: "0px 2px 4px rgba(0,0,0,0.25)",
+    elevation: 5,
+  },
+  filterModalBody: {
+    padding: 16,
+    maxHeight: 400,
+  },
+  filterSection: {
+    marginBottom: 24,
+  },
+  filterSectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text,
+    marginBottom: 12,
+  },
+  filterInput: {
+    backgroundColor: colors.inputBackground,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: colors.text,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  pickerSection: {
+    marginBottom: 16,
+  },
+  pickerLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: colors.text,
+    marginBottom: 8,
+  },
+  pickerOptions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  pickerOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: colors.inputBackground,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  pickerOptionActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  pickerOptionText: {
+    fontSize: 14,
+    color: colors.text,
+  },
+  pickerOptionTextActive: {
+    color: "#FFF",
+    fontWeight: "500",
+  },
+  priceInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  priceInput: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  priceRangeSeparator: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  filterModalFooter: {
+    flexDirection: "row",
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    gap: 12,
+  },
+  filterModalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  clearButton: {
+    backgroundColor: colors.inputBackground,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  clearButtonText: {
+    color: colors.text,
+    fontWeight: "500",
+  },
+  applyButton: {
+    backgroundColor: colors.primary,
+  },
+  applyButtonText: {
+    color: "#FFF",
+    fontWeight: "500",
   },
 });

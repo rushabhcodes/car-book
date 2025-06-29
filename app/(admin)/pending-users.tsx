@@ -70,17 +70,7 @@ export default function PendingUsersScreen() {
                 email: user.email,
                 phone: user.phone,
                 role: "dealer",
-                status: "active",
-                subscription: {
-                  plan: "basic",
-                  status: "active",
-                  startDate: new Date().toISOString(),
-                  endDate: new Date(
-                    Date.now() + 30 * 24 * 60 * 60 * 1000
-                  ).toISOString(),
-                  amount: 999,
-                  listingLimit: 10,
-                },
+                status: "active"
               };
 
               addDealer(newDealer);
