@@ -5,9 +5,9 @@ import FormSection from '@/components/FormSection';
 import MediaUploader from '@/components/MediaUploader';
 import { useAuthStore } from '@/store/authStore';
 import { useCarListingStore } from '@/store/carListingStore';
-import { useDealerStore } from '@/store/dealerStore';
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -28,13 +28,14 @@ import {
   transmissionTypes
 } from '@/constants/carData';
 import colors from '@/constants/colors';
-import * as Haptics from 'expo-haptics';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
+import * as Haptics from 'expo-haptics';
 
 export default function ListCarScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const { user } = useAuthStore();
   const { getCurrentUserListingLimit } = useSubscriptionStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { 
     form, 
     errors, 
@@ -74,22 +75,34 @@ export default function ListCarScreen() {
     
     const isValid = validateForm();
     if (isValid) {
-      const success = await submitListing();
-      if (success) {
+      setIsSubmitting(true);
+      
+      try {
+        const success = await submitListing();
+        if (success) {
+          Alert.alert(
+            "Success!",
+            "Your car has been listed successfully and is pending approval.",
+            [
+              { 
+                text: "View Listings", 
+                
+              },
+              { 
+                text: "OK", 
+                style: "default" 
+              }
+            ]
+          );
+        }
+      } catch (error) {
         Alert.alert(
-          "Success!",
-          "Your car has been listed successfully and is pending approval.",
-          [
-            { 
-              text: "View Listings", 
-              
-            },
-            { 
-              text: "OK", 
-              style: "default" 
-            }
-          ]
+          "Error",
+          "Failed to submit listing. Please try again.",
+          [{ text: "OK" }]
         );
+      } finally {
+        setIsSubmitting(false);
       }
     } else {
       // Find the first error and scroll to it
@@ -281,13 +294,20 @@ export default function ListCarScreen() {
         <TouchableOpacity
           style={[
             styles.submitButton,
-            dealerListingsCount >= listingLimit && styles.submitButtonDisabled
+            (dealerListingsCount >= listingLimit || isSubmitting) && styles.submitButtonDisabled
           ]}
           onPress={handleSubmit}
           activeOpacity={0.8}
-          disabled={dealerListingsCount >= listingLimit}
+          disabled={dealerListingsCount >= listingLimit || isSubmitting}
         >
-          <Text style={styles.submitButtonText}>List My Car</Text>
+          {isSubmitting ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#FFF" style={styles.loadingSpinner} />
+              <Text style={styles.submitButtonText}>Listing Your Car...</Text>
+            </View>
+          ) : (
+            <Text style={styles.submitButtonText}>List My Car</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -356,5 +376,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingSpinner: {
+    marginRight: 12,
   },
 });
